@@ -1,4 +1,4 @@
-# Copyright (c) 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2002, 2005 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -33,6 +33,9 @@ from resolver import *
 
 __all__ = ['ObjectPathResolver', 'expose']
 
+class NoDefault(object):
+    pass
+
 class ObjectPathResolver(Resolver):
     """
     Inspired by CherryPy <http://www.cherrypy.org/>. :) For an explanation

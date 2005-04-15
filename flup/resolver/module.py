@@ -31,6 +31,9 @@ from resolver import *
 
 __all__ = ['ModuleResolver']
 
+class NoDefault(object):
+    pass
+
 class ModuleResolver(Resolver):
     """
     Exposes all top-level callables within a module. The module's __all__

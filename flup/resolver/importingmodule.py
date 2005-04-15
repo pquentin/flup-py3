@@ -35,6 +35,9 @@ from resolver import *
 
 __all__ = ['ImportingModuleResolver']
 
+class NoDefault(object):
+    pass
+
 class ImportingModuleResolver(Resolver):
     """
     Constructor takes a directory name or a list of directories. Interprets

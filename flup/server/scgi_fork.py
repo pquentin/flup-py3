@@ -25,7 +25,7 @@
 # $Id$
 
 """
-scgi - an SCGI/WSGI gateway. (I might have to rename this module.)
+scgi - an SCGI/WSGI gateway.
 
 For more information about SCGI and mod_scgi for Apache1/Apache2, see
 <http://www.mems-exchange.org/software/scgi/>.
@@ -87,10 +87,15 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
     of preforking to be quite superior. So if your application really doesn't
     mind running in multiple processes, go use SWAP. ;)
     """
-    def __init__(self, application, environ=None,
+    def __init__(self, application, scriptName='', environ=None,
                  bindAddress=('localhost', 4000), allowedServers=None,
                  loggingLevel=logging.INFO, **kw):
         """
+        scriptName is the initial portion of the URL path that "belongs"
+        to your application. It is used to determine PATH_INFO (which doesn't
+        seem to be passed in). An empty scriptName means your application
+        is mounted at the root of your virtual host.
+
         environ, which must be a dictionary, can contain any additional
         environment variables you want to pass to your application.
 
@@ -106,6 +111,7 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
         loggingLevel sets the logging level of the module-level logger.
         """
         BaseSCGIServer.__init__(self, application,
+                                scriptName=scriptName,
                                 environ=environ,
                                 multithreaded=False,
                                 bindAddress=bindAddress,

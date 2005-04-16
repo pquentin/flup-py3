@@ -267,11 +267,16 @@ class BaseSCGIServer(object):
     # What Request class to use.
     requestClass = Request
 
-    def __init__(self, application, environ=None,
+    def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True,
                  bindAddress=('localhost', 4000), allowedServers=None,
                  loggingLevel=logging.INFO):
         """
+        scriptName is the initial portion of the URL path that "belongs"
+        to your application. It is used to determine PATH_INFO (which doesn't
+        seem to be passed in). An empty scriptName means your application
+        is mounted at the root of your virtual host.
+
         environ, which must be a dictionary, can contain any additional
         environment variables you want to pass to your application.
 
@@ -292,6 +297,7 @@ class BaseSCGIServer(object):
             environ = {}
 
         self.application = application
+        self.scriptName = scriptName
         self.environ = environ
         self.multithreaded = multithreaded
         self._bindAddress = bindAddress
@@ -344,6 +350,8 @@ class BaseSCGIServer(object):
             environ['wsgi.url_scheme'] = 'https'
         else:
             environ['wsgi.url_scheme'] = 'http'
+
+        self._sanitizeEnv(environ)
 
         headers_set = []
         headers_sent = []
@@ -424,6 +432,17 @@ class BaseSCGIServer(object):
         finally:
             if not self.multithreaded:
                 self._appLock.release()
+
+    def _sanitizeEnv(self, environ):
+        """Fill-in/deduce missing values in environ."""
+        # Namely SCRIPT_NAME/PATH_INFO
+        value = environ['SCRIPT_NAME']
+        scriptName = self.scriptName
+        if not value.startswith(scriptName):
+            self.logger.warning('scriptName does not match request URI')
+
+        environ['PATH_INFO'] = value[len(scriptName):]
+        environ['SCRIPT_NAME'] = scriptName
 
     def error(self, request):
         """

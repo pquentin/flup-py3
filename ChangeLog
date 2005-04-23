@@ -1,0 +1,6 @@
+2005-04-23  Allan Saddi  <asaddi@ganymede.saddi.net>
+
+	* Ensure that SessionStore.checkOutSession() never returns an
+	  invalidated Session. Reported by Rene Dudfield.
+
+

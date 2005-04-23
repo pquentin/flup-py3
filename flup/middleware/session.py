@@ -202,9 +202,15 @@ class SessionStore(object):
         try:
             sess = self._loadSession(identifier)
             if sess is not None:
-                assert sess.identifier not in self._checkOutList
-                self._checkOutList[sess.identifier] = sess
-                sess.touch()
+                if sess.isValid:
+                    assert sess.identifier not in self._checkOutList
+                    self._checkOutList[sess.identifier] = sess
+                    sess.touch()
+                else:
+                    # No longer valid (same as not existing). Delete/unlock
+                    # the session.
+                    self._deleteSession(sess.identifier)
+                    sess = None
             return sess
         finally:
             self._lock.release()

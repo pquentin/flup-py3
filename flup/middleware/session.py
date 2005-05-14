@@ -95,7 +95,6 @@ class Session(dict):
         self._creationTime = self._lastAccessTime = 0
         self._isValid = False
 
-    @classmethod
     def isIdentifierValid(cls, ident):
         """
         Returns whether or not the given string *could be* a valid session
@@ -107,8 +106,8 @@ class Session(dict):
                     return False
             return True
         return False
+    isIdentifierValid = classmethod(isIdentifierValid)
 
-    @classmethod
     def generateIdentifier(cls):
         """
         Generate a random session identifier.
@@ -120,6 +119,7 @@ class Session(dict):
             # So we lose 2 bits per random byte...
             sessId += cls.identifierChars[ord(c) % len(cls.identifierChars)]
         return sessId
+    generateIdentifier = classmethod(generateIdentifier)
 
 def _shutdown(ref):
     store = ref()

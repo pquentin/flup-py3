@@ -1,3 +1,8 @@
+2005-05-14  Allan Saddi  <asaddi@ganymede.saddi.net>
+
+	* Convert the use of decorators in session.py to something
+	  compatible with Python <2.4.
+
 2005-04-23  Allan Saddi  <asaddi@ganymede.saddi.net>
 
 	* Ensure that SessionStore.checkOutSession() never returns an

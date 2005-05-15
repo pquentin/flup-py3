@@ -1,3 +1,9 @@
+2005-05-15  Allan Saddi  <asaddi@ganymede.saddi.net>
+
+	* Prevent possible deadlock related to DiskSessionStore locking.
+	* Add logic to SessionStore so that it will block if attempting to
+	  check out a Session that's already been checked out.
+
 2005-05-14  Allan Saddi  <asaddi@ganymede.saddi.net>
 
 	* Convert the use of decorators in session.py to something

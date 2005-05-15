@@ -37,9 +37,9 @@ import shelve
 import cPickle as pickle
 
 try:
-    import thread
+    import threading
 except ImportError:
-    import dummy_thread as thread
+    import dummy_threading as threading
 
 __all__ = ['Session',
            'SessionStore',
@@ -141,7 +141,7 @@ class SessionStore(object):
     _sessionClass = Session
 
     def __init__(self, timeout=60, sessionClass=None):
-        self._lock = thread.allocate_lock()
+        self._lock = threading.Condition()
 
         # Timeout in minutes
         self._sessionTimeout = timeout
@@ -200,6 +200,9 @@ class SessionStore(object):
 
         self._lock.acquire()
         try:
+            # If we know it's already checked out, block.
+            while identifier in self._checkOutList:
+                self._lock.wait()
             sess = self._loadSession(identifier)
             if sess is not None:
                 if sess.isValid:
@@ -233,6 +236,7 @@ class SessionStore(object):
             else:
                 self._deleteSession(session.identifier)
             del self._checkOutList[session.identifier]
+            self._lock.notify()
         finally:
             self._lock.release()
 
@@ -409,33 +413,38 @@ class DiskSessionStore(SessionStore):
         return os.path.join(self._sessionDir, identifier + '.sess')
 
     def _lockSession(self, identifier, block=True):
-        fn = self._filenameForSession(identifier) + '.lock'
-        while True:
-            try:
-                fd = os.open(fn, os.O_WRONLY|os.O_CREAT|os.O_EXCL)
-            except OSError, e:
-                if e.errno != errno.EEXIST:
-                    raise
-            else:
-                os.close(fd)
-                break
+        # Release SessionStore lock so we don't deadlock.
+        self._lock.release()
+        try:
+            fn = self._filenameForSession(identifier) + '.lock'
+            while True:
+                try:
+                    fd = os.open(fn, os.O_WRONLY|os.O_CREAT|os.O_EXCL)
+                except OSError, e:
+                    if e.errno != errno.EEXIST:
+                        raise
+                else:
+                    os.close(fd)
+                    break
 
-            if not block:
-                return False
+                if not block:
+                    return False
 
-            # See if the lock is stale. If so, remove it.
-            try:
-                now = time.time()
-                mtime = os.path.getmtime(fn)
-                if (mtime + 60) < now:
-                    os.unlink(fn)
-            except OSError, e:
-                if e.errno != errno.ENOENT:
-                    raise
+                # See if the lock is stale. If so, remove it.
+                try:
+                    now = time.time()
+                    mtime = os.path.getmtime(fn)
+                    if (mtime + 60) < now:
+                        os.unlink(fn)
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        raise
 
-            time.sleep(0.1)
+                time.sleep(0.1)
 
-        return True
+            return True
+        finally:
+            self._lock.acquire()
 
     def _unlockSession(self, identifier):
         fn = self._filenameForSession(identifier) + '.lock'

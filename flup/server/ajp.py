@@ -190,5 +190,5 @@ if __name__ == '__main__':
 
     # Explicitly set bindAddress to *:8009 for testing.
     WSGIServer(test_app,
-               bindAddress=('', 8009),
+               bindAddress=('', 8009), allowedServers=None,
                loggingLevel=logging.DEBUG).run()

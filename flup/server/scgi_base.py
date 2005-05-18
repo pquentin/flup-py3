@@ -43,6 +43,9 @@ import threading
 
 __all__ = ['BaseSCGIServer']
 
+class NoDefault(object):
+    pass
+
 # The main classes use this name for logging.
 LoggerName = 'scgi-wsgi'
 
@@ -269,7 +272,7 @@ class BaseSCGIServer(object):
 
     def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=('localhost', 4000), allowedServers=None,
+                 bindAddress=('localhost', 4000), allowedServers=NoDefault,
                  loggingLevel=logging.INFO):
         """
         scriptName is the initial portion of the URL path that "belongs"
@@ -292,7 +295,8 @@ class BaseSCGIServer(object):
 
         allowedServers must be None or a list of strings representing the
         IPv4 addresses of servers allowed to connect. None means accept
-        connections from anywhere.
+        connections from anywhere. By default, it is a list containing
+        the single item '127.0.0.1'.
 
         loggingLevel sets the logging level of the module-level logger.
         """
@@ -305,6 +309,8 @@ class BaseSCGIServer(object):
         self.multithreaded = multithreaded
         self.multiprocess = multiprocess
         self._bindAddress = bindAddress
+        if allowedServers is NoDefault:
+            allowedServers = ['127.0.0.1']
         self._allowedServers = allowedServers
 
         # Used to force single-threadedness.
@@ -438,6 +444,9 @@ class BaseSCGIServer(object):
         """Fill-in/deduce missing values in environ."""
         # Namely SCRIPT_NAME/PATH_INFO
         value = environ['SCRIPT_NAME']
+        # Pull PATH_INFO from environ, if it exists. (cgi2scgi actually
+        # passes it in.)
+        value += environ.get('PATH_INFO', '')
         scriptName = self.scriptName
         if not value.startswith(scriptName):
             self.logger.warning('scriptName does not match request URI')

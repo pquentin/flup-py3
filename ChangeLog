@@ -1,5 +1,8 @@
 2005-05-18  Allan Saddi  <asaddi@ganymede.saddi.net>
 
+	* Change default allowedServers for ajp and scgi to ['127.0.0.1'].
+	* Accept PATH_INFO from environment for scgi servers, in case
+	  cgi2scgi is being used. Submitted by Ian Bicking.
 	* Change threaded servers so wsgi.multiprocess is False by default.
 	  Allow it to be changed by keyword argument.
 	* Fix wsgi.multiprocess for scgi_fork. (Set to True.)

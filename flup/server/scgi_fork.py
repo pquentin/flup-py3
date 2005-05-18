@@ -72,6 +72,8 @@ from preforkserver import PreforkServer
 __all__ = ['WSGIServer']
 
 class WSGIServer(BaseSCGIServer, PreforkServer):
+    _multiprocess = True
+
     """
     SCGI/WSGI server. For information about SCGI (Simple Common Gateway
     Interface), see <http://www.mems-exchange.org/software/scgi/>.

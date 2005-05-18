@@ -267,6 +267,11 @@ class BaseSCGIServer(object):
     # What Request class to use.
     requestClass = Request
 
+    # AFAIK, the current mod_scgi does not do load-balancing/fail-over.
+    # So a single application deployment will only run in one process
+    # at a time, on this server (when using a threaded server, of course).
+    _multiprocess = False
+
     def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True,
                  bindAddress=('localhost', 4000), allowedServers=None,
@@ -340,10 +345,7 @@ class BaseSCGIServer(object):
         environ['wsgi.input'] = request.stdin
         environ['wsgi.errors'] = sys.stderr
         environ['wsgi.multithread'] = self.multithreaded
-        # AFAIK, the current mod_scgi does not do load-balancing/fail-over.
-        # So a single application deployment will only run in one process
-        # at a time, on this server.
-        environ['wsgi.multiprocess'] = False
+        environ['wsgi.multiprocess'] = self._multiprocess
         environ['wsgi.run_once'] = False
 
         if environ.get('HTTPS', 'off') in ('on', '1'):

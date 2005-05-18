@@ -101,7 +101,7 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
     mod_jk) - see <http://jakarta.apache.org/tomcat/connectors-doc/>.
     """
     def __init__(self, application, scriptName='', environ=None,
-                 multithreaded=True,
+                 multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 8009), allowedServers=None,
                  loggingLevel=logging.INFO, **kw):
         """
@@ -128,6 +128,7 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
                                scriptName=scriptName,
                                environ=environ,
                                multithreaded=multithreaded,
+                               multiprocess=multiprocess,
                                bindAddress=bindAddress,
                                allowedServers=allowedServers,
                                loggingLevel=loggingLevel)

@@ -81,9 +81,10 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
         BaseFCGIServer.__init__(self, application,
                                 environ=environ,
                                 multithreaded=False,
+                                multiprocess=True,
                                 bindAddress=bindAddress,
                                 multiplexed=multiplexed)
-        for key in ('multithreaded', 'jobClass', 'jobArgs'):
+        for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]
         PreforkServer.__init__(self, jobClass=self._connectionClass,

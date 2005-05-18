@@ -88,7 +88,7 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
     mind running in multiple processes, go use SWAP. ;)
     """
     def __init__(self, application, scriptName='', environ=None,
-                 multithreaded=True,
+                 multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 4000), allowedServers=None,
                  loggingLevel=logging.INFO, **kw):
         """
@@ -115,6 +115,7 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
                                 scriptName=scriptName,
                                 environ=environ,
                                 multithreaded=multithreaded,
+                                multiprocess=multiprocess,
                                 bindAddress=bindAddress,
                                 allowedServers=allowedServers,
                                 loggingLevel=loggingLevel)

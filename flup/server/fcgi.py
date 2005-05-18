@@ -62,7 +62,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
     <http://www.python.org/peps/pep-0333.html>.
     """
     def __init__(self, application, environ=None,
-                 multithreaded=True,
+                 multithreaded=True, multiprocess=False,
                  bindAddress=None, multiplexed=False, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
@@ -81,6 +81,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         BaseFCGIServer.__init__(self, application,
                                 environ=environ,
                                 multithreaded=multithreaded,
+                                multiprocess=multiprocess,
                                 bindAddress=bindAddress,
                                 multiplexed=multiplexed)
         for key in ('jobClass', 'jobArgs'):

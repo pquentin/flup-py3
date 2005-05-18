@@ -127,10 +127,11 @@ class WSGIServer(BaseAJPServer, PreforkServer):
                                scriptName=scriptName,
                                environ=environ,
                                multithreaded=False,
+                               multiprocess=True,
                                bindAddress=bindAddress,
                                allowedServers=allowedServers,
                                loggingLevel=loggingLevel)
-        for key in ('multithreaded', 'jobClass', 'jobArgs'):
+        for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]
         PreforkServer.__init__(self, jobClass=Connection, jobArgs=(self,), **kw)

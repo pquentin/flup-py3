@@ -72,8 +72,6 @@ from preforkserver import PreforkServer
 __all__ = ['WSGIServer']
 
 class WSGIServer(BaseSCGIServer, PreforkServer):
-    _multiprocess = True
-
     """
     SCGI/WSGI server. For information about SCGI (Simple Common Gateway
     Interface), see <http://www.mems-exchange.org/software/scgi/>.
@@ -116,10 +114,11 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
                                 scriptName=scriptName,
                                 environ=environ,
                                 multithreaded=False,
+                                multiprocess=True,
                                 bindAddress=bindAddress,
                                 allowedServers=allowedServers,
                                 loggingLevel=loggingLevel)
-        for key in ('multithreaded', 'jobClass', 'jobArgs'):
+        for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]
         PreforkServer.__init__(self, jobClass=Connection, jobArgs=(self,), **kw)

@@ -757,7 +757,7 @@ class BaseAJPServer(object):
     inputStreamShrinkThreshold = 102400 - 8192
 
     def __init__(self, application, scriptName='', environ=None,
-                 multithreaded=True,
+                 multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 8009), allowedServers=None,
                  loggingLevel=logging.INFO):
         """
@@ -770,6 +770,9 @@ class BaseAJPServer(object):
         environment variables you want to pass to your application.
 
         Set multithreaded to False if your application is not thread-safe.
+
+        Set multiprocess to True to explicitly set wsgi.multiprocess to
+        True. (Only makes sense with threaded servers.)
 
         bindAddress is the address to bind to, which must be a tuple of
         length 2. The first element is a string, which is the host name
@@ -789,6 +792,7 @@ class BaseAJPServer(object):
         self.scriptName = scriptName
         self.environ = environ
         self.multithreaded = multithreaded
+        self.multiprocess = multiprocess
         self._bindAddress = bindAddress
         self._allowedServers = allowedServers
 
@@ -829,7 +833,7 @@ class BaseAJPServer(object):
         environ['wsgi.input'] = request.input
         environ['wsgi.errors'] = sys.stderr
         environ['wsgi.multithread'] = self.multithreaded
-        environ['wsgi.multiprocess'] = True
+        environ['wsgi.multiprocess'] = self.multiprocess
         environ['wsgi.run_once'] = False
 
         if environ.get('HTTPS', 'off') in ('on', '1'):

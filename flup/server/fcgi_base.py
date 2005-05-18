@@ -882,7 +882,8 @@ class BaseFCGIServer(object):
     # we throw away already-read data once this certain amount has been read.
     inputStreamShrinkThreshold = 102400 - 8192
 
-    def __init__(self, application, environ=None, multithreaded=True,
+    def __init__(self, application, environ=None,
+                 multithreaded=True, multiprocess=False,
                  bindAddress=None, multiplexed=False):
         """
         bindAddress, if present, must either be a string or a 2-tuple. If
@@ -907,6 +908,7 @@ class BaseFCGIServer(object):
         self.application = application
         self.environ = environ
         self.multithreaded = multithreaded
+        self.multiprocess = multiprocess
 
         self._bindAddress = bindAddress
 
@@ -1009,13 +1011,8 @@ class BaseFCGIServer(object):
         environ['wsgi.errors'] = stderr
         environ['wsgi.multithread'] = not isinstance(req, CGIRequest) and \
                                       thread_available and self.multithreaded
-        # Rationale for the following: If started by the web server
-        # (self._bindAddress is None) in either FastCGI or CGI mode, the
-        # possibility of being spawned multiple times simultaneously is quite
-        # real. And, if started as an external server, multiple copies may be
-        # spawned for load-balancing/redundancy. (Though I don't think
-        # mod_fastcgi supports this?)
-        environ['wsgi.multiprocess'] = True
+        environ['wsgi.multiprocess'] = isinstance(req, CGIRequest) or \
+                                       self.multiprocess
         environ['wsgi.run_once'] = isinstance(req, CGIRequest)
 
         if environ.get('HTTPS', 'off') in ('on', '1'):

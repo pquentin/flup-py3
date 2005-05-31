@@ -443,11 +443,20 @@ class BaseSCGIServer(object):
     def _sanitizeEnv(self, environ):
         """Fill-in/deduce missing values in environ."""
         # Namely SCRIPT_NAME/PATH_INFO
+        scriptName = environ.get('WSGI_SCRIPT_NAME')
+        if scriptName is None:
+            scriptName = self.scriptName
+        elif scriptName.lower() == 'none':
+            scriptName = None
+
+        if scriptName is None:
+            # Do nothing (most likely coming from cgi2scgi)
+            return
+
         value = environ['SCRIPT_NAME']
         # Pull PATH_INFO from environ, if it exists. (cgi2scgi actually
         # passes it in.)
         value += environ.get('PATH_INFO', '')
-        scriptName = self.scriptName
         if not value.startswith(scriptName):
             self.logger.warning('scriptName does not match request URI')
 

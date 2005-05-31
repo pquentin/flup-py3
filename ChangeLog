@@ -1,3 +1,10 @@
+2005-05-31  Allan Saddi  <asaddi@ganymede.saddi.net>
+
+	* Take scriptName from the WSGI_SCRIPT_NAME environment variable
+	  passed from the web server, if present.
+	* Check if scriptName is None, and if so, don't modify SCRIPT_NAME
+	  & PATH_INFO. For better compatibility with cgi2scgi. (scgi_base)
+
 2005-05-18  Allan Saddi  <asaddi@ganymede.saddi.net>
 
 	* Change default allowedServers for ajp and scgi to ['127.0.0.1'].

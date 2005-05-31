@@ -471,9 +471,7 @@ class Request(object):
     def __init__(self, conn):
         self._conn = conn
 
-        self.environ = {
-            'SCRIPT_NAME': conn.server.scriptName
-            }
+        self.environ = {}
         self.input = InputStream(conn)
 
         self._headersSent = False
@@ -519,12 +517,6 @@ class Request(object):
 
     def setRequestURI(self, value):
         self.environ['REQUEST_URI'] = value
-
-        scriptName = self._conn.server.scriptName
-        if not value.startswith(scriptName):
-            self.logger.warning('scriptName does not match request URI')
-
-        self.environ['PATH_INFO'] = value[len(scriptName):]
 
     def setRemoteAddr(self, value):
         self.environ['REMOTE_ADDR'] = value
@@ -847,6 +839,8 @@ class BaseAJPServer(object):
         else:
             environ['wsgi.url_scheme'] = 'http'
 
+        self._sanitizeEnv(environ)
+
         headers_set = []
         headers_sent = []
         result = None
@@ -915,6 +909,17 @@ class BaseAJPServer(object):
         finally:
             if not self.multithreaded:
                 self._appLock.release()
+
+    def _sanitizeEnv(self, environ):
+        """Fill-in/deduce missing values in environ."""
+        # Namely SCRIPT_NAME/PATH_INFO
+        value = environ['REQUEST_URI']
+        scriptName = environ.get('WSGI_SCRIPT_NAME', self.scriptName)
+        if not value.startswith(scriptName):
+            self.logger.warning('scriptName does not match request URI')
+
+        environ['PATH_INFO'] = value[len(scriptName):]
+        environ['SCRIPT_NAME'] = scriptName
 
     def error(self, request):
         """

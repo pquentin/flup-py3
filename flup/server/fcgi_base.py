@@ -619,6 +619,17 @@ class Connection(object):
 
     def _cleanupSocket(self):
         """Close the Connection's socket."""
+        try:
+            self._sock.shutdown(socket.SHUT_WR)
+        except:
+            return
+        try:
+            while True:
+                r, w, e = select.select([self._sock], [], [])
+                if not r or not self._sock.recv(1024):
+                    break
+        except:
+            pass
         self._sock.close()
         
     def run(self):
@@ -701,7 +712,7 @@ class Connection(object):
         if __debug__: _debug(2, 'end_request: flags = %d' % req.flags)
 
         if not (req.flags & FCGI_KEEP_CONN) and not self._requests:
-            self._sock.close()
+            self._cleanupSocket()
             self._keepGoing = False
 
     def _do_get_values(self, inrec):

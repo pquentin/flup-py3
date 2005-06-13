@@ -1,3 +1,8 @@
+2005-06-12  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Cleanly close connection socket to avoid sending a TCP RST to
+	  the web server. (fcgi_base) Fix suggested by Dima Barsky.
+
 2005-05-31  Allan Saddi  <asaddi@ganymede.saddi.net>
 
 	* Take scriptName from the WSGI_SCRIPT_NAME environment variable

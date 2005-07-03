@@ -54,7 +54,7 @@ class Session(dict):
     """
     identifierLength = 32
     # Would be nice if len(identifierChars) were some power of 2.
-    identifierChars = string.digits + string.letters + '-_'
+    identifierChars = string.digits + string.ascii_letters + '-_'
 
     def __init__(self, identifier):
         super(Session, self).__init__()

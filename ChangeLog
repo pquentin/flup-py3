@@ -1,3 +1,9 @@
+2005-07-03  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Ensure session identifiers only contain ASCII characters when
+	  using a non-ASCII locale. Thanks to Ksenia Marasanova for the
+	  the fix.
+
 2005-06-12  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Cleanly close connection socket to avoid sending a TCP RST to

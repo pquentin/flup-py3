@@ -1,3 +1,11 @@
+2005-09-07  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Python 2.3 doesn't define socket.SHUT_WR, which affected
+	  the closing of the FastCGI socket with the server. This would
+	  cause output to hang. Thanks to Eugene Lazutkin for bringing
+	  the problem to my attention and going out of his way to help
+	  me debug it!
+
 2005-07-03  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Ensure session identifiers only contain ASCII characters when

@@ -46,6 +46,10 @@ except ImportError:
     import dummy_threading as threading
     thread_available = False
 
+# Apparently 2.3 doesn't define SHUT_WR? Assume it is 1 in this case.
+if not hasattr(socket, 'SHUT_WR'):
+    socket.SHUT_WR = 1
+
 __all__ = ['BaseFCGIServer']
 
 # Constants from the spec.

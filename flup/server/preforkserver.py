@@ -34,6 +34,22 @@ import select
 import errno
 import signal
 
+# If running Python < 2.4, require eunuchs module for socket.socketpair().
+# See <http://www.inoi.fi/open/trac/eunuchs>.
+if not hasattr(socket, 'socketpair'):
+    try:
+        import eunuchs
+    except ImportError:
+        # TODO: Other alternatives? Perhaps using os.pipe()?
+        raise ImportError, 'Requires eunuchs module for Python < 2.4'
+
+    def socketpair():
+        s1, s2 = eunuchs.socketpair.socketpair()
+        return (socket.fromfd(s1, socket.AF_UNIX, socket.SOCK_STREAM),
+                socket.fromfd(s2, socket.AF_UNIX, socket.SOCK_STREAM))
+
+    socket.socketpair = socketpair
+
 class PreforkServer(object):
     """
     A preforked server model conceptually similar to Apache httpd(2). At

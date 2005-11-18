@@ -1,3 +1,8 @@
+2005-11-18  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* When running under Python < 2.4, attempt to use socketpair()
+	  from eunuchs module.
+
 2005-09-07  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Python 2.3 doesn't define socket.SHUT_WR, which affected

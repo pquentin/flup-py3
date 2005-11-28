@@ -731,7 +731,7 @@ class Connection(object):
                 outrec.contentData += encode_pair(name, str(cap))
 
         outrec.contentLength = len(outrec.contentData)
-        self.writeRecord(rec)
+        self.writeRecord(outrec)
 
     def _do_begin_request(self, inrec):
         """Handle an FCGI_BEGIN_REQUEST from the web server."""

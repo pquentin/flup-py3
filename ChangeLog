@@ -1,3 +1,8 @@
+2005-11-28  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Fix issue with FCGI_GET_VALUES handling. Thanks to
+	  Timothy Wright for pointing this out.
+
 2005-11-18  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* When running under Python < 2.4, attempt to use socketpair()

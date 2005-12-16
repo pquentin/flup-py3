@@ -56,7 +56,7 @@ class ObjectPathResolver(Resolver):
     default_page = 'default'
 
     def __init__(self, root, index=NoDefault, default=NoDefault,
-                 favorIndex=True):
+                 favorIndex=True, **kw):
         """
         root is the root object of your URL hierarchy. In CherryPy, this
         would be cpg.root.
@@ -66,6 +66,7 @@ class ObjectPathResolver(Resolver):
         which method is called when the URL has a trailing slash. If
         True, the index method will be called. Otherwise, the default method.
         """
+        super(ObjectPathResolver, self).__init__(**kw)
         self.root = root
         if index is not NoDefault:
             self.index_page = index

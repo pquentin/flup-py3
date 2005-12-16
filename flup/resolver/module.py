@@ -52,7 +52,8 @@ class ModuleResolver(Resolver):
     """
     index_page = 'index'
     
-    def __init__(self, module, index=NoDefault):
+    def __init__(self, module, index=NoDefault, **kw):
+        super(ModuleResolver, self).__init__(**kw)
         self.module = module
         if index is not NoDefault:
             self.index_page = index

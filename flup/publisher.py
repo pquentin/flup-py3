@@ -450,7 +450,12 @@ class Publisher(object):
             func = self._resolver.resolve(transaction.request,
                                           redirect=redirect)
             if func is None:
-                return self._error404(environ, start_response)
+                # See if there's a higher-level 404 page
+                if hasattr(self._resolver, 'error404') and \
+                   self._resolver.error404 is not None:
+                    func = self._resolver.error404
+                else:
+                    return self._error404(environ, start_response)
 
             try:
                 # Call the function.

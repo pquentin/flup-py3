@@ -39,8 +39,7 @@ class FunctionResolver(Resolver):
     Can be used as a decorator and might actually have uses when used with
     the ComplexResolver.
     """
-    def __init__(self, func, **kw):
-        super(FunctionResolver, self).__init__(**kw)
+    def __init__(self, func):
         self._func = func
 
     def resolve(self, request, redirect=False):

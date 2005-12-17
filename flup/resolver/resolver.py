@@ -43,9 +43,6 @@ class Resolver(object):
 
     When resolving an InternalRedirect, redirect will be True.
     """
-    def __init__(self, error404=None):
-        self.error404 = error404
-
     def resolve(self, request, redirect=False):
         raise NotImplementedError, self.__class__.__name__ + '.resolve'
 

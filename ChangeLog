@@ -2,7 +2,10 @@
 
 	* Switch to setuptools for egg support.
 	* Add higher-level 404 error page support. Thanks to Scot Doyle
-	  for suggesting the idea and providing code.
+	  for suggesting the idea and providing code. If you previously
+	  subclassed Publisher to provide a custom 404 error page, this
+	  is now broken. It will have to be massaged to fit the new
+	  calling convention.
 
 2005-11-28  Allan Saddi  <asaddi@kalahari.flup.org>
 

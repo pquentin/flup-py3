@@ -37,8 +37,7 @@ class NoPathInfoResolver(Resolver):
     what's needed to resolve the function). Optionally allows a trailing
     slash.
     """
-    def __init__(self, resolver, allowTrailingSlash=False, **kw):
-        super(NoPathInfoResolver, self).__init__(**kw)
+    def __init__(self, resolver, allowTrailingSlash=False):
         self._resolver = resolver
         self._allowTrailingSlash = allowTrailingSlash
 

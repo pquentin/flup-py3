@@ -62,8 +62,7 @@ class ImportingModuleResolver(Resolver):
     default_module = None
     index_page = 'index'
 
-    def __init__(self, path, defaultModule=NoDefault, index=NoDefault, **kw):
-        super(ImportingModuleResolver, self).__init__(**kw)
+    def __init__(self, path, defaultModule=NoDefault, index=NoDefault):
         self.path = path
         if defaultModule is not NoDefault:
             self.default_module = defaultModule

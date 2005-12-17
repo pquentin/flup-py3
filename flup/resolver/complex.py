@@ -54,8 +54,7 @@ class ComplexResolver(Resolver):
     """
     _slashRE = re.compile(r'''/{2,}''')
 
-    def __init__(self, **kw):
-        super(ComplexResolver, self).__init__(**kw)
+    def __init__(self):
         self.resolverMap = {}
 
     def _canonicalUrl(self, url):

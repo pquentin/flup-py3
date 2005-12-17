@@ -421,11 +421,14 @@ class Publisher(object):
     """
     _transactionClass = Transaction
 
-    def __init__(self, resolver, transactionClass=None):
+    def __init__(self, resolver, transactionClass=None, error404=None):
         self._resolver = resolver
 
         if transactionClass is not None:
             self._transactionClass = transactionClass
+
+        if error404 is not None:
+            self._error404 = error404
 
     def _get_resolver(self):
         return self._resolver
@@ -450,12 +453,7 @@ class Publisher(object):
             func = self._resolver.resolve(transaction.request,
                                           redirect=redirect)
             if func is None:
-                # See if there's a higher-level 404 page
-                if hasattr(self._resolver, 'error404') and \
-                   self._resolver.error404 is not None:
-                    func = self._resolver.error404
-                else:
-                    return self._error404(environ, start_response)
+                func = self._error404
 
             try:
                 # Call the function.
@@ -484,13 +482,13 @@ class Publisher(object):
         start_response(transaction.response.status, responseHeaders)
         return transaction.response.body
 
-    def _error404(self, environ, start_response):
+    def _error404(self, transaction):
         """Error page to display when resolver fails."""
-        start_response('404 Not Found', [('Content-Type', 'text/html')])
-        request_uri = environ.get('REQUEST_URI')
+        transaction.response.status = '404 Not Found'
+        request_uri = transaction.request.environ.get('REQUEST_URI')
         if request_uri is None:
-            request_uri = environ.get('SCRIPT_NAME', '') + \
-                          environ.get('PATH_INFO', '')
+            request_uri = transaction.request.environ.get('SCRIPT_NAME', '') + \
+                          transaction.request.environ.get('PATH_INFO', '')
         return ["""<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>404 Not Found</title>
@@ -499,7 +497,7 @@ class Publisher(object):
 The requested URL %s was not found on this server.<p>
 <hr>
 %s</body></html>
-""" % (request_uri, environ.get('SERVER_SIGNATURE', ''))]
+""" % (request_uri, transaction.request.environ.get('SERVER_SIGNATURE', ''))]
 
 class File(object):
     """

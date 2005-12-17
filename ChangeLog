@@ -1,7 +1,8 @@
 2005-12-16  Allan Saddi  <asaddi@kalahari.flup.org>
 
+	* Switch to setuptools for egg support.
 	* Add higher-level 404 error page support. Thanks to Scot Doyle
-	  for suggesting and idea and providing code.
+	  for suggesting the idea and providing code.
 
 2005-11-28  Allan Saddi  <asaddi@kalahari.flup.org>
 

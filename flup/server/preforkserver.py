@@ -45,8 +45,11 @@ if not hasattr(socket, 'socketpair'):
 
     def socketpair():
         s1, s2 = eunuchs.socketpair.socketpair()
-        return (socket.fromfd(s1, socket.AF_UNIX, socket.SOCK_STREAM),
+        p, c = (socket.fromfd(s1, socket.AF_UNIX, socket.SOCK_STREAM),
                 socket.fromfd(s2, socket.AF_UNIX, socket.SOCK_STREAM))
+        os.close(s1)
+        os.close(s2)
+        return p, c
 
     socket.socketpair = socketpair
 

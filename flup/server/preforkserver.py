@@ -350,13 +350,17 @@ class PreforkServer(object):
         pass
 
     def _installSignalHandlers(self):
-        """Installs signal handlers."""
-        self._oldSIGs = [(x,signal.getsignal(x)) for x in
-                         (signal.SIGHUP, signal.SIGINT, signal.SIGTERM,
-                          signal.SIGCHLD)]
-        signal.signal(signal.SIGHUP, self._hupHandler)
-        signal.signal(signal.SIGINT, self._intHandler)
-        signal.signal(signal.SIGTERM, self._intHandler)
+        supportedSignals = [signal.SIGINT, signal.SIGTERM]
+        if hasattr(signal, 'SIGHUP'):
+            supportedSignals.append(signal.SIGHUP)
+
+        self._oldSIGs = [(x,signal.getsignal(x)) for x in supportedSignals]
+
+        for sig in supportedSignals:
+            if hasattr(signal, 'SIGHUP') and sig == signal.SIGHUP:
+                signal.signal(sig, self._hupHandler)
+            else:
+                signal.signal(sig, self._intHandler)
 
     def _restoreSignalHandlers(self):
         """Restores previous signal handlers."""

@@ -1,3 +1,9 @@
+2006-01-05  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Improve Windows compatibility by conditionally installing
+	  SIGHUP handler. Thanks to Brad Miller for pointing out the
+	  problem and providing a fix.
+
 2005-12-19  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Fix socket leak in eunuchs socketpair() wrapper. Thanks to

@@ -90,10 +90,7 @@ class ImportingModuleResolver(Resolver):
         module = None
         if module_name and (module_name[0] != '_' or redirect) and \
            not module_name.count('.'):
-            try:
-                module = _import_module(module_name, path=self.path)
-            except:
-                pass
+            module = _import_module(module_name, path=self.path)
 
         if module is not None:
             if func_name and (func_name[0] != '_' or redirect):

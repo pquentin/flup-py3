@@ -1,3 +1,10 @@
+2006-01-15  Allan Saddi  <asaddi@ganymede.saddi.net>
+
+	* Change the behavior of ImportingModuleResolver when dealing
+	  with ImportErrors. Previously, it would act as if the module
+	  did not exist. Now, it propagates the exception to another
+	  level (outer middleware or WSGI). Reported by Scot Doyle.
+
 2006-01-05  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Improve Windows compatibility by conditionally installing

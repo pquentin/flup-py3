@@ -1,4 +1,4 @@
-# Copyright (c) 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,8 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
     <http://www.python.org/peps/pep-0333.html>.
     """
     def __init__(self, application, environ=None,
-                 bindAddress=None, multiplexed=False, **kw):
+                 bindAddress=None, multiplexed=False,
+                 debug=True, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
         contents will be copied into application's environ. Useful
@@ -83,7 +84,8 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
                                 multithreaded=False,
                                 multiprocess=True,
                                 bindAddress=bindAddress,
-                                multiplexed=multiplexed)
+                                multiplexed=multiplexed,
+                                debug=debug)
         for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]
@@ -127,6 +129,10 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
         self._cleanupSocket(sock)
 
         return ret
+
+def factory(global_conf, host=None, port=None, **local):
+    import paste_factory
+    return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
 
 if __name__ == '__main__':
     def test_app(environ, start_response):

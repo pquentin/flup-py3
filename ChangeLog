@@ -1,3 +1,11 @@
+2006-02-23  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Add paste.server_factory-compliant factories and respective
+	  egg entry points. Thanks to Luis Bruno for the code.
+
+	  Add debug option to servers, which is True by default.
+	  Currently, only server-level error handling is affected.
+	
 2006-01-15  Allan Saddi  <asaddi@ganymede.saddi.net>
 
 	* Change the behavior of ImportingModuleResolver when dealing

@@ -1,4 +1,4 @@
-# Copyright (c) 2002, 2003, 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2002, 2003, 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -899,7 +899,8 @@ class BaseFCGIServer(object):
 
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=None, multiplexed=False):
+                 bindAddress=None, multiplexed=False,
+                 debug=True):
         """
         bindAddress, if present, must either be a string or a 2-tuple. If
         present, run() will open its own listening socket. You would use
@@ -924,6 +925,7 @@ class BaseFCGIServer(object):
         self.environ = environ
         self.multithreaded = multithreaded
         self.multiprocess = multiprocess
+        self.debug = debug
 
         self._bindAddress = bindAddress
 
@@ -1135,6 +1137,18 @@ class BaseFCGIServer(object):
         Called by Request if an exception occurs within the handler. May and
         should be overridden.
         """
-        import cgitb
-        req.stdout.write('Content-Type: text/html\r\n\r\n' +
-                         cgitb.html(sys.exc_info()))
+        if self.debug:
+            import cgitb
+            req.stdout.write('Content-Type: text/html\r\n\r\n' +
+                             cgitb.html(sys.exc_info()))
+        else:
+            errorpage = """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>Unhandled Exception</title>
+</head><body>
+<h1>Unhandled Exception</h1>
+<p>An unhandled exception was thrown by the application.</p>
+</body></html>
+"""
+            req.stdout.write('Content-Type: text/html\r\n\r\n' +
+                             errorpage)

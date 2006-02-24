@@ -1,4 +1,4 @@
-# Copyright (c) 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,8 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
     """
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=None, multiplexed=False, **kw):
+                 bindAddress=None, multiplexed=False,
+                 debug=True, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
         contents will be copied into application's environ. Useful
@@ -83,7 +84,8 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
                                 multithreaded=multithreaded,
                                 multiprocess=multiprocess,
                                 bindAddress=bindAddress,
-                                multiplexed=multiplexed)
+                                multiplexed=multiplexed,
+                                debug=debug)
         for key in ('jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]
@@ -111,6 +113,10 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         self._cleanupSocket(sock)
 
         return ret
+
+def factory(global_conf, host=None, port=None, **local):
+    import paste_factory
+    return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
 
 if __name__ == '__main__':
     def test_app(environ, start_response):

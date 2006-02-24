@@ -1,4 +1,4 @@
-# Copyright (c) 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -103,7 +103,7 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
     def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 8009), allowedServers=None,
-                 loggingLevel=logging.INFO, **kw):
+                 loggingLevel=logging.INFO, debug=True, **kw):
         """
         scriptName is the initial portion of the URL path that "belongs"
         to your application. It is used to determine PATH_INFO (which doesn't
@@ -131,7 +131,8 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
                                multiprocess=multiprocess,
                                bindAddress=bindAddress,
                                allowedServers=allowedServers,
-                               loggingLevel=loggingLevel)
+                               loggingLevel=loggingLevel,
+                               debug=debug)
         for key in ('jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]
@@ -160,6 +161,10 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
                          self._hupReceived and ' (reload requested)' or '')
 
         return ret
+
+def factory(global_conf, host=None, port=None, **local):
+    import paste_factory
+    return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
 
 if __name__ == '__main__':
     def test_app(environ, start_response):

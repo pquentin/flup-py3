@@ -1,4 +1,4 @@
-# Copyright (c) 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -273,7 +273,7 @@ class BaseSCGIServer(object):
     def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 4000), allowedServers=NoDefault,
-                 loggingLevel=logging.INFO):
+                 loggingLevel=logging.INFO, debug=True):
         """
         scriptName is the initial portion of the URL path that "belongs"
         to your application. It is used to determine PATH_INFO (which doesn't
@@ -308,6 +308,7 @@ class BaseSCGIServer(object):
         self.environ = environ
         self.multithreaded = multithreaded
         self.multiprocess = multiprocess
+        self.debug = debug
         self._bindAddress = bindAddress
         if allowedServers is NoDefault:
             allowedServers = ['127.0.0.1']
@@ -468,6 +469,18 @@ class BaseSCGIServer(object):
         Override to provide custom error handling. Ideally, however,
         all errors should be caught at the application level.
         """
-        import cgitb
-        request.stdout.write('Content-Type: text/html\r\n\r\n' +
-                             cgitb.html(sys.exc_info()))
+        if self.debug:
+            import cgitb
+            request.stdout.write('Content-Type: text/html\r\n\r\n' +
+                                 cgitb.html(sys.exc_info()))
+        else:
+            errorpage = """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>Unhandled Exception</title>
+</head><body>
+<h1>Unhandled Exception</h1>
+<p>An unhandled exception was thrown by the application.</p>
+</body></html>
+"""
+            request.stdout.write('Content-Type: text/html\r\n\r\n' +
+                                 errorpage)

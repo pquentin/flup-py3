@@ -61,6 +61,9 @@ class PreforkServer(object):
     If the number of idle children is ever above maxSpare, the extra
     children are killed.
 
+    If maxRequests is positive, each child will only handle that many
+    requests in its lifetime before exiting.
+    
     jobClass should be a class whose constructor takes at least two
     arguments: the client socket and client address. jobArgs, which
     must be a list or tuple, is any additional (static) arguments you
@@ -71,10 +74,11 @@ class PreforkServer(object):
     complete and the child process moves to idle state.
     """
     def __init__(self, minSpare=1, maxSpare=5, maxChildren=50,
-                 jobClass=None, jobArgs=()):
+                 maxRequests=0, jobClass=None, jobArgs=()):
         self._minSpare = minSpare
         self._maxSpare = maxSpare
         self._maxChildren = max(maxSpare, maxChildren)
+        self._maxRequests = maxRequests
         self._jobClass = jobClass
         self._jobArgs = jobArgs
 
@@ -291,6 +295,8 @@ class PreforkServer(object):
 
     def _child(self, sock, parent):
         """Main loop for children."""
+        requestCount = 0
+        
         while True:
             # Wait for any activity on the main socket or parent socket.
             r, w, e = select.select([sock, parent], [], [])
@@ -327,6 +333,12 @@ class PreforkServer(object):
             # Do the job.
             self._jobClass(clientSock, addr, *self._jobArgs).run()
 
+            # If we've serviced the maximum number of requests, exit.
+            if self._maxRequests > 0:
+                requestCount += 1
+                if requestCount >= self._maxRequests:
+                    break
+                
             # Tell parent we're free again.
             try:
                 parent.send('\xff')

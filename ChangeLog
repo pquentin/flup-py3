@@ -1,3 +1,8 @@
+2006-04-06  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Catch a strange FieldStorage case. Seen in production.
+	  Not quite sure what causes it.
+
 2006-03-21  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Add maxRequests option to PreforkServer. Patch provided by

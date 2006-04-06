@@ -1,4 +1,4 @@
-# Copyright (c) 2002, 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2002, 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -85,19 +85,20 @@ class Request(object):
                             environ=self._environ, keep_blank_values=1)
 
         # Collapse FieldStorage into a simple dict.
-        for field in form.list:
-            # Wrap uploaded files
-            if field.filename:
-                val = File(field)
-            else:
-                val = field.value
+        if form.list is not None:
+            for field in form.list:
+                # Wrap uploaded files
+                if field.filename:
+                    val = File(field)
+                else:
+                    val = field.value
 
-            # Add File/value to args, constructing a list if there are
-            # multiple values.
-            if self._form.has_key(field.name):
-                self._form[field.name].append(val)
-            else:
-                self._form[field.name] = [val]
+                # Add File/value to args, constructing a list if there are
+                # multiple values.
+                if self._form.has_key(field.name):
+                    self._form[field.name].append(val)
+                else:
+                    self._form[field.name] = [val]
 
         # Unwrap lists with a single item.
         for name,val in self._form.items():

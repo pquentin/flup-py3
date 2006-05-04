@@ -1,3 +1,9 @@
+2006-05-03  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Fix illusive problem with AJP implementation. Thanks to
+	  Moshe Van der Sterre for explaining the problem and
+	  providing a fix.
+
 2006-04-06  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Catch a strange FieldStorage case. Seen in production.

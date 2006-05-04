@@ -466,7 +466,7 @@ class Request(object):
     with are: environ, input, startResponse(), and write().
     """
     # Do not ever change the following value.
-    _maxWrite = 8192 - 4 - 3 # 8k - pkt header - send body header
+    _maxWrite = 8192 - 4 - 3 - 1 # 8k - pkt header - send body header - NUL
 
     def __init__(self, conn):
         self._conn = conn
@@ -588,7 +588,7 @@ class Request(object):
             pkt = Packet()
             pkt.data = PKTTYPE_SEND_BODY + \
                        struct.pack('>H', toWrite) + \
-                       data[:toWrite]
+                       data[:toWrite] + '\x00' # Undocumented
             self._conn.writePacket(pkt)
 
             data = data[toWrite:]

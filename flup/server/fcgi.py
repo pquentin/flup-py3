@@ -63,7 +63,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
     """
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=None, multiplexed=False,
+                 bindAddress=None, umask=None, multiplexed=False,
                  debug=True, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
@@ -84,6 +84,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
                                 multithreaded=multithreaded,
                                 multiprocess=multiprocess,
                                 bindAddress=bindAddress,
+                                umask=umask,
                                 multiplexed=multiplexed,
                                 debug=debug)
         for key in ('jobClass', 'jobArgs'):

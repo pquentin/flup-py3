@@ -899,7 +899,7 @@ class BaseFCGIServer(object):
 
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=None, multiplexed=False,
+                 bindAddress=None, umask=None, multiplexed=False,
                  debug=True):
         """
         bindAddress, if present, must either be a string or a 2-tuple. If
@@ -911,6 +911,11 @@ class BaseFCGIServer(object):
         is the interface name/IP to bind to, and the second element (an int)
         is the port number.
 
+        If binding to a UNIX socket, umask may be set to specify what
+        the umask is to be changed to before the socket is created in the
+        filesystem. After the socket is created, the previous umask is
+        restored.
+        
         Set multiplexed to True if you want to handle multiple requests
         per connection. Some FastCGI backends (namely mod_fastcgi) don't
         multiplex requests at all, so by default this is off (which saves
@@ -928,7 +933,8 @@ class BaseFCGIServer(object):
         self.debug = debug
 
         self._bindAddress = bindAddress
-
+        self._umask = umask
+        
         # Used to force single-threadedness
         self._appLock = thread.allocate_lock()
 
@@ -987,6 +993,7 @@ class BaseFCGIServer(object):
                 sys.exit(0)
         else:
             # Run as a server
+            oldUmask = None
             if type(self._bindAddress) is str:
                 # Unix socket
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -994,6 +1001,8 @@ class BaseFCGIServer(object):
                     os.unlink(self._bindAddress)
                 except OSError:
                     pass
+                if self._umask is not None:
+                    oldUmask = os.umask(self._umask)
             else:
                 # INET socket
                 assert type(self._bindAddress) is tuple
@@ -1004,6 +1013,9 @@ class BaseFCGIServer(object):
             sock.bind(self._bindAddress)
             sock.listen(socket.SOMAXCONN)
 
+            if oldUmask is not None:
+                os.umask(oldUmask)
+                
         return sock
 
     def _cleanupSocket(self, sock):

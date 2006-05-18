@@ -1,3 +1,8 @@
+2006-05-18  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Added umask keyword parameter to fcgi and fcgi_fork,
+	  for use when binding to a UNIX socket.
+
 2006-05-03  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Fix illusive problem with AJP implementation. Thanks to

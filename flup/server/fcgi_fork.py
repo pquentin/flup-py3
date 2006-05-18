@@ -63,7 +63,7 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
     <http://www.python.org/peps/pep-0333.html>.
     """
     def __init__(self, application, environ=None,
-                 bindAddress=None, multiplexed=False,
+                 bindAddress=None, umask=None, multiplexed=False,
                  debug=True, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
@@ -84,6 +84,7 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
                                 multithreaded=False,
                                 multiprocess=True,
                                 bindAddress=bindAddress,
+                                umask=umask,
                                 multiplexed=multiplexed,
                                 debug=debug)
         for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):

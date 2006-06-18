@@ -1,3 +1,14 @@
+2006-06-18  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Stop ignoring EPIPE exceptions, as this is probably the
+	  wrong thing to do. (Application is unaware of disconnected
+	  clients and the CPU spins when sending large files to a
+	  disconnected client.) Thanks to Ivan Sagalaev for bringing
+	  this to my attention.
+
+	  NB: Existing applications that use the flup servers may begin
+	  seeing socket.error exceptions...
+
 2006-05-18  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Added umask keyword parameter to fcgi and fcgi_fork,

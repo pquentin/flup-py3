@@ -387,18 +387,10 @@ class BaseSCGIServer(object):
                 for header in responseHeaders:
                     s += '%s: %s\r\n' % header
                 s += '\r\n'
-                try:
-                    request.stdout.write(s)
-                except socket.error, e:
-                    if e[0] != errno.EPIPE:
-                        raise
+                request.stdout.write(s)
 
-            try:
-                request.stdout.write(data)
-                request.stdout.flush()
-            except socket.error, e:
-                if e[0] != errno.EPIPE:
-                    raise
+            request.stdout.write(data)
+            request.stdout.flush()
 
         def start_response(status, response_headers, exc_info=None):
             if exc_info:
@@ -427,16 +419,20 @@ class BaseSCGIServer(object):
         if not self.multithreaded:
             self._appLock.acquire()
         try:
-            result = self.application(environ, start_response)
             try:
-                for data in result:
-                    if data:
-                        write(data)
-                if not headers_sent:
-                    write('') # in case body was empty
-            finally:
-                if hasattr(result, 'close'):
-                    result.close()
+                result = self.application(environ, start_response)
+                try:
+                    for data in result:
+                        if data:
+                            write(data)
+                    if not headers_sent:
+                        write('') # in case body was empty
+                finally:
+                    if hasattr(result, 'close'):
+                        result.close()
+            except socket.error, e:
+                if e[0] != errno.EPIPE:
+                    raise # Don't let EPIPE propagate beyond server
         finally:
             if not self.multithreaded:
                 self._appLock.release()

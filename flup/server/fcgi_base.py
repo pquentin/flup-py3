@@ -506,9 +506,7 @@ class Record(object):
             try:
                 sent = sock.send(data)
             except socket.error, e:
-                if e[0] == errno.EPIPE:
-                    return # Don't bother raising an exception. Just ignore.
-                elif e[0] == errno.EAGAIN:
+                if e[0] == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
                 else:
@@ -1109,16 +1107,20 @@ class BaseFCGIServer(object):
         if not self.multithreaded:
             self._appLock.acquire()
         try:
-            result = self.application(environ, start_response)
             try:
-                for data in result:
-                    if data:
-                        write(data)
-                if not headers_sent:
-                    write('') # in case body was empty
-            finally:
-                if hasattr(result, 'close'):
-                    result.close()
+                result = self.application(environ, start_response)
+                try:
+                    for data in result:
+                        if data:
+                            write(data)
+                    if not headers_sent:
+                        write('') # in case body was empty
+                finally:
+                    if hasattr(result, 'close'):
+                        result.close()
+            except socket.error, e:
+                if e[0] != errno.EPIPE:
+                    raise # Don't let EPIPE propagate beyond server
         finally:
             if not self.multithreaded:
                 self._appLock.release()

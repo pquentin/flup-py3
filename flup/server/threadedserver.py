@@ -34,6 +34,15 @@ import errno
 
 from threadpool import ThreadPool
 
+try:
+    import fcntl
+except ImportError:
+    def setCloseOnExec(sock):
+        pass
+else:
+    def setCloseOnExec(sock):
+        fcntl.fcntl(sock.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+
 __all__ = ['ThreadedServer']
 
 class ThreadedServer(object):
@@ -54,6 +63,9 @@ class ThreadedServer(object):
         self._hupReceived = False
         self._installSignalHandlers()
 
+        # Set close-on-exec
+        setCloseOnExec(sock)
+        
         # Main loop.
         while self._keepGoing:
             try:
@@ -71,6 +83,8 @@ class ThreadedServer(object):
                         continue
                     raise
 
+                setCloseOnExec(clientSock)
+                
                 if not self._isClientAllowed(addr):
                     clientSock.close()
                     continue

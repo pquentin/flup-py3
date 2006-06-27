@@ -53,6 +53,15 @@ if not hasattr(socket, 'socketpair'):
 
     socket.socketpair = socketpair
 
+try:
+    import fcntl
+except ImportError:
+    def setCloseOnExec(sock):
+        pass
+else:
+    def setCloseOnExec(sock):
+        fcntl.fcntl(sock.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+
 class PreforkServer(object):
     """
     A preforked server model conceptually similar to Apache httpd(2). At
@@ -102,6 +111,9 @@ class PreforkServer(object):
         # Don't want operations on main socket to block.
         sock.setblocking(0)
 
+        # Set close-on-exec
+        setCloseOnExec(sock)
+        
         # Main loop.
         while self._keepGoing:
             # Maintain minimum number of children.
@@ -255,7 +267,9 @@ class PreforkServer(object):
         # the parent and its children.
         parent, child = socket.socketpair()
         parent.setblocking(0)
+        setCloseOnExec(parent)
         child.setblocking(0)
+        setCloseOnExec(child)
         try:
             pid = os.fork()
         except OSError, e:
@@ -317,6 +331,8 @@ class PreforkServer(object):
                     continue
                 raise
 
+            setCloseOnExec(clientSock)
+            
             # Check if this client is allowed.
             if not self._isClientAllowed(addr):
                 clientSock.close()

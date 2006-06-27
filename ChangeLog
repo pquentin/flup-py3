@@ -1,3 +1,8 @@
+2006-06-27  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Set close-on-exec flag on all server sockets. Thanks to
+	  Ralf Schmitt for reporting the problem.
+
 2006-06-18  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Stop ignoring EPIPE exceptions, as this is probably the

@@ -1,3 +1,9 @@
+2006-08-02  Allan Saddi  <asaddi@kalahari.flup.org>
+
+	* Add cookieExpiration keyword to SessionService /
+	  SessionMiddleware to adjust the session cookie's expiration.
+	  Thanks to Blaise Laflamme for the suggestion.
+
 2006-06-27  Allan Saddi  <asaddi@kalahari.flup.org>
 
 	* Set close-on-exec flag on all server sockets. Thanks to

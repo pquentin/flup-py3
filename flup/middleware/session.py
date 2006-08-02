@@ -1,4 +1,4 @@
-# Copyright (c) 2005 Allan Saddi <allan@saddi.com>
+# Copyright (c) 2005, 2006 Allan Saddi <allan@saddi.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -543,9 +543,11 @@ class SessionService(object):
 
     def __init__(self, store, environ,
                  cookieName='_SID_',
+                 cookieExpiration=None,
                  fieldName='_SID_'):
         self._store = store
         self._cookieName = cookieName
+        self._cookieExpiration = None
         self._fieldName = fieldName
 
         self._session = None
@@ -621,6 +623,8 @@ class SessionService(object):
             name = self._cookieName
             C[name] = sessId
             C[name]['path'] = '/'
+            if self._cookieExpiration is not None:
+                C[name]['expires'] = self._cookieExpiration
             if expireCookie:
                 # Expire cookie
                 C[name]['expires'] = -365*24*60*60

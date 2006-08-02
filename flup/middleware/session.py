@@ -547,7 +547,7 @@ class SessionService(object):
                  fieldName='_SID_'):
         self._store = store
         self._cookieName = cookieName
-        self._cookieExpiration = None
+        self._cookieExpiration = cookieExpiration
         self._fieldName = fieldName
 
         self._session = None

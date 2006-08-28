@@ -51,7 +51,7 @@ __version__ = '$Revision$'
 
 import os
 
-from fcgi_base import BaseFCGIServer
+from fcgi_base import BaseFCGIServer, FCGI_RESPONDER
 from threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
@@ -64,7 +64,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=None, umask=None, multiplexed=False,
-                 debug=True, **kw):
+                 debug=True, roles=(FCGI_RESPONDER,), **kw):
         """
         environ, if present, must be a dictionary-like object. Its
         contents will be copied into application's environ. Useful
@@ -86,7 +86,8 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
                                 bindAddress=bindAddress,
                                 umask=umask,
                                 multiplexed=multiplexed,
-                                debug=debug)
+                                debug=debug,
+                                roles=roles)
         for key in ('jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]

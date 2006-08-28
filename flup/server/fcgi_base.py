@@ -898,7 +898,7 @@ class BaseFCGIServer(object):
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=None, umask=None, multiplexed=False,
-                 debug=True):
+                 debug=True, roles=(FCGI_RESPONDER,)):
         """
         bindAddress, if present, must either be a string or a 2-tuple. If
         present, run() will open its own listening socket. You would use
@@ -929,6 +929,7 @@ class BaseFCGIServer(object):
         self.multithreaded = multithreaded
         self.multiprocess = multiprocess
         self.debug = debug
+        self.roles = roles
 
         self._bindAddress = bindAddress
         self._umask = umask
@@ -1022,7 +1023,7 @@ class BaseFCGIServer(object):
 
     def handler(self, req):
         """Special handler for WSGI."""
-        if req.role != FCGI_RESPONDER:
+        if req.role not in self.roles:
             return FCGI_UNKNOWN_ROLE, 0
 
         # Mostly taken from example CGI gateway.

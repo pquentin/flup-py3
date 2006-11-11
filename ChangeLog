@@ -1,3 +1,8 @@
+2006-11-10  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Add cookieAttributes to SessionService to make it easier
+	  to customize the generated cookie's attributes.
+
 2006-08-28  Allan Saddi  <asaddi@sahara.flup.org>
 
 	* Add support for FastCGI roles other than FCGI_RESPONDER.

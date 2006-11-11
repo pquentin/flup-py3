@@ -538,16 +538,20 @@ class SessionService(object):
         the URL. (read/write)
       service.encodeURL(url) - Returns url encoded with Session ID (if
         necessary).
+      service.cookieAttributes - Dictionary of additional RFC2109 attributes
+        to be added to the generated cookie.
     """
     _expiredSessionIdentifier = 'expired session'
 
     def __init__(self, store, environ,
                  cookieName='_SID_',
-                 cookieExpiration=None,
+                 cookieExpiration=None, # Deprecated
+                 cookieAttributes={},
                  fieldName='_SID_'):
         self._store = store
         self._cookieName = cookieName
         self._cookieExpiration = cookieExpiration
+        self.cookieAttributes = dict(cookieAttributes)
         self._fieldName = fieldName
 
         self._session = None
@@ -625,6 +629,7 @@ class SessionService(object):
             C[name]['path'] = '/'
             if self._cookieExpiration is not None:
                 C[name]['expires'] = self._cookieExpiration
+            C[name].update(self.cookieAttributes)
             if expireCookie:
                 # Expire cookie
                 C[name]['expires'] = -365*24*60*60

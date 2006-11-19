@@ -30,6 +30,7 @@ __version__ = '$Revision$'
 import struct
 import time
 import zlib
+import re
 
 __all__ = ['GzipMiddleware']
 
@@ -156,8 +157,12 @@ class _gzipMiddleware(object):
         # already contain Content-Encoding.
         for name,value in headers:
             name = name.lower()
-            if name == 'content-type' and value in self._mimeTypes:
-                self.gzipOk = True
+            if name == 'content-type':
+                value = value.split(';')[0].strip()
+                for p in self._mimeTypes:
+                    if p.match(value) is not None:
+                        self.gzipOk = True
+                        break
             elif name == 'content-encoding':
                 self.gzipOk = False
                 break
@@ -193,10 +198,10 @@ class GzipMiddleware(object):
     """
     def __init__(self, application, mimeTypes=None, compresslevel=9):
         if mimeTypes is None:
-            mimeTypes = ['text/html']
+            mimeTypes = ['text/.*']
 
         self._application = application
-        self._mimeTypes = mimeTypes
+        self._mimeTypes = [re.compile(m) for m in mimeTypes]
         self._compresslevel = compresslevel
 
     def __call__(self, environ, start_response):

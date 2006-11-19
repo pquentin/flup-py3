@@ -1,3 +1,9 @@
+2006-11-19  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Change mime-type matching algorithm in GzipMiddleware.
+	  Strip parameters (e.g. "encoding") and accept a list of
+	  regexps. By default, compress 'text/.*' mime-types.
+
 2006-11-10  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Add cookieAttributes to SessionService to make it easier

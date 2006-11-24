@@ -1,3 +1,9 @@
+2006-11-24  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Add flup.client package which contains various
+	  WSGI -> connector client implentations. (So far: FastCGI,
+	  and SCGI.)
+
 2006-11-19  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Change mime-type matching algorithm in GzipMiddleware.

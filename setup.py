@@ -22,5 +22,6 @@ setup(name='flup',
       author='Allan Saddi',
       author_email='allan@saddi.com',
       url='http://www.saddi.com/software/flup/',
-      packages=['flup', 'flup.middleware', 'flup.resolver', 'flup.server'],
+      packages=['flup', 'flup.client', 'flup.middleware', 'flup.resolver',
+                'flup.server'],
       **setuptools_extras)

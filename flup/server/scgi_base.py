@@ -210,8 +210,9 @@ class Connection(object):
         self.logger = logging.getLogger(LoggerName)
 
     def run(self):
-        self.logger.debug('Connection starting up (%s:%d)',
-                          self._addr[0], self._addr[1])
+        if len(self._addr) == 2:
+            self.logger.debug('Connection starting up (%s:%d)',
+                              self._addr[0], self._addr[1])
 
         try:
             self.processInput()
@@ -222,8 +223,9 @@ class Connection(object):
         except:
             self.logger.exception('Exception caught in Connection')
 
-        self.logger.debug('Connection shutting down (%s:%d)',
-                          self._addr[0], self._addr[1])
+        if len(self._addr) == 2:
+            self.logger.debug('Connection shutting down (%s:%d)',
+                              self._addr[0], self._addr[1])
 
         # All done!
         self._sock.close()

@@ -89,7 +89,8 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
     """
     def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=('localhost', 4000), allowedServers=None,
+                 bindAddress=('localhost', 4000), umask=None,
+                 allowedServers=None,
                  loggingLevel=logging.INFO, debug=True, **kw):
         """
         scriptName is the initial portion of the URL path that "belongs"
@@ -100,11 +101,17 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
         environ, which must be a dictionary, can contain any additional
         environment variables you want to pass to your application.
 
-        bindAddress is the address to bind to, which must be a tuple of
-        length 2. The first element is a string, which is the host name
-        or IPv4 address of a local interface. The 2nd element is the port
-        number.
+        bindAddress is the address to bind to, which must be a string or
+        a tuple of length 2. If a tuple, the first element must be a string,
+        which is the host name or IPv4 address of a local interface. The
+        2nd element of the tuple is the port number. If a string, it will
+        be interpreted as a filename and a UNIX socket will be opened.
 
+        If binding to a UNIX socket, umask may be set to specify what
+        the umask is to be changed to before the socket is created in the
+        filesystem. After the socket is created, the previous umask is
+        restored.
+        
         allowedServers must be None or a list of strings representing the
         IPv4 addresses of servers allowed to connect. None means accept
         connections from anywhere.
@@ -117,6 +124,7 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
                                 multithreaded=multithreaded,
                                 multiprocess=multiprocess,
                                 bindAddress=bindAddress,
+                                umask=umask,
                                 allowedServers=allowedServers,
                                 loggingLevel=loggingLevel,
                                 debug=debug)

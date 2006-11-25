@@ -35,6 +35,7 @@ import errno
 import cStringIO as StringIO
 import signal
 import datetime
+import os
 
 # Threads are required. If you want a non-threaded (forking) version, look at
 # SWAP <http://www.idyll.org/~t/www-tools/wsgi/>.
@@ -272,7 +273,8 @@ class BaseSCGIServer(object):
 
     def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
-                 bindAddress=('localhost', 4000), allowedServers=NoDefault,
+                 bindAddress=('localhost', 4000), umask=None,
+                 allowedServers=NoDefault,
                  loggingLevel=logging.INFO, debug=True):
         """
         scriptName is the initial portion of the URL path that "belongs"
@@ -288,11 +290,17 @@ class BaseSCGIServer(object):
         Set multiprocess to True to explicitly set wsgi.multiprocess to
         True. (Only makes sense with threaded servers.)
 
-        bindAddress is the address to bind to, which must be a tuple of
-        length 2. The first element is a string, which is the host name
-        or IPv4 address of a local interface. The 2nd element is the port
-        number.
+        bindAddress is the address to bind to, which must be a string or
+        a tuple of length 2. If a tuple, the first element must be a string,
+        which is the host name or IPv4 address of a local interface. The
+        2nd element of the tuple is the port number. If a string, it will
+        be interpreted as a filename and a UNIX socket will be opened.
 
+        If binding to a UNIX socket, umask may be set to specify what
+        the umask is to be changed to before the socket is created in the
+        filesystem. After the socket is created, the previous umask is
+        restored.
+        
         allowedServers must be None or a list of strings representing the
         IPv4 addresses of servers allowed to connect. None means accept
         connections from anywhere. By default, it is a list containing
@@ -310,6 +318,7 @@ class BaseSCGIServer(object):
         self.multiprocess = multiprocess
         self.debug = debug
         self._bindAddress = bindAddress
+        self._umask = umask
         if allowedServers is NoDefault:
             allowedServers = ['127.0.0.1']
         self._allowedServers = allowedServers
@@ -322,10 +331,29 @@ class BaseSCGIServer(object):
 
     def _setupSocket(self):
         """Creates and binds the socket for communication with the server."""
-        sock = socket.socket()
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        oldUmask = None
+        if type(self._bindAddress) is str:
+            # Unix socket
+            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            try:
+                os.unlink(self._bindAddress)
+            except OSError:
+                pass
+            if self._umask is not None:
+                oldUmask = os.umask(self._umask)
+        else:
+            # INET socket
+            assert type(self._bindAddress) is tuple
+            assert len(self._bindAddress) == 2
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
         sock.bind(self._bindAddress)
         sock.listen(socket.SOMAXCONN)
+
+        if oldUmask is not None:
+            os.umask(oldUmask)
+
         return sock
 
     def _cleanupSocket(self, sock):
@@ -333,7 +361,9 @@ class BaseSCGIServer(object):
         sock.close()
 
     def _isClientAllowed(self, addr):
-        ret = self._allowedServers is None or addr[0] in self._allowedServers
+        ret = self._allowedServers is None or \
+              len(addr) != 2 or \
+              (len(addr) == 2 and addr[0] in self._allowedServers)
         if not ret:
             self.logger.warning('Server connection from %s disallowed',
                                 addr[0])

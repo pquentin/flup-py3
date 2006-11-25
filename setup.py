@@ -9,6 +9,9 @@ try:
         ajp = flup.server.ajp:factory
         fcgi = flup.server.fcgi:factory
         scgi = flup.server.scgi:factory
+        ajp_thread = flup.server.ajp:factory
+        fcgi_thread = flup.server.fcgi:factory
+        scgi_thread = flup.server.scgi:factory
         ajp_fork = flup.server.ajp_fork:factory
         fcgi_fork = flup.server.fcgi_fork:factory
         scgi_fork = flup.server.scgi_fork:factory

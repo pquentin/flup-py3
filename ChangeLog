@@ -1,5 +1,7 @@
 2006-11-24  Allan Saddi  <asaddi@europa.saddi.net>
 
+	* Add *_thread egg entry-point aliases.
+
 	* Add UNIX domain socket support to scgi, scgi_fork,
 	  scgi_app.
 

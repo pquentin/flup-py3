@@ -1,3 +1,8 @@
+2006-11-26  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Don't attempt to install signal handlers under Windows
+	  to improve compatibility.
+
 2006-11-24  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Add *_thread egg entry-point aliases.

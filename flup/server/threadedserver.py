@@ -27,6 +27,7 @@
 __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
 
+import sys
 import socket
 import select
 import signal
@@ -61,7 +62,10 @@ class ThreadedServer(object):
         # Set up signal handlers.
         self._keepGoing = True
         self._hupReceived = False
-        self._installSignalHandlers()
+
+        # Might need to revisit this?
+        if not sys.platform.startswith('win'):
+            self._installSignalHandlers()
 
         # Set close-on-exec
         setCloseOnExec(sock)

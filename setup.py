@@ -1,30 +1,41 @@
-#!/usr/bin/env python
+# Bootstrap setuptools
+from ez_setup import use_setuptools
+use_setuptools()
 
-setuptools_extras = {}
-
-try:
-    from setuptools import setup
-    setuptools_extras['entry_points'] = """
-        [paste.server_factory]
-        ajp = flup.server.ajp:factory
-        fcgi = flup.server.fcgi:factory
-        scgi = flup.server.scgi:factory
-        ajp_thread = flup.server.ajp:factory
-        fcgi_thread = flup.server.fcgi:factory
-        scgi_thread = flup.server.scgi:factory
-        ajp_fork = flup.server.ajp_fork:factory
-        fcgi_fork = flup.server.fcgi_fork:factory
-        scgi_fork = flup.server.scgi_fork:factory
-        """
-except ImportError:
-    from distutils.core import setup
-
-setup(name='flup',
-      version='0.5',
-      description='Random assortment of WSGI servers, middleware',
-      author='Allan Saddi',
-      author_email='allan@saddi.com',
-      url='http://www.saddi.com/software/flup/',
-      packages=['flup', 'flup.client', 'flup.middleware', 'flup.resolver',
-                'flup.server'],
-      **setuptools_extras)
+from setuptools import setup, find_packages
+setup(
+    name = 'flup',
+    version = '0.5',
+    packages = find_packages(),
+    zip_safe = True, # Despite flup.resolver.importingmodule
+    
+    entry_points = """
+    [paste.server_factory]
+    ajp = flup.server.ajp:factory
+    fcgi = flup.server.fcgi:factory
+    scgi = flup.server.scgi:factory
+    ajp_thread = flup.server.ajp:factory
+    fcgi_thread = flup.server.fcgi:factory
+    scgi_thread = flup.server.scgi:factory
+    ajp_fork = flup.server.ajp_fork:factory
+    fcgi_fork = flup.server.fcgi_fork:factory
+    scgi_fork = flup.server.scgi_fork:factory
+    """,
+    
+    author = 'Allan Saddi',
+    author_email = 'allan@saddi.com',
+    description = 'Random assortment of WSGI servers, middleware',
+    license = 'BSD',
+    url='http://www.saddi.com/software/flup/',
+    download_url = 'http://svn.saddi.com/flup/trunk#egg=flup-dev',
+    classifiers = [
+    'Development Status :: 4 - Beta',
+    'Environment :: Web Environment',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: BSD License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Topic :: Internet :: WWW/HTTP :: WSGI :: Server',
+    'Topic :: Software Development :: Libraries :: Python Modules',
+    ],
+    )

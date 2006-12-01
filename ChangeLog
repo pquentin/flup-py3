@@ -1,3 +1,7 @@
+2006-12-01  Allan Saddi  <asaddi@europa.saddi.net>
+
+	* Update setup script.
+
 2006-11-26  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Don't attempt to install signal handlers under Windows

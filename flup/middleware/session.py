@@ -540,6 +540,8 @@ class SessionService(object):
         necessary).
       service.cookieAttributes - Dictionary of additional RFC2109 attributes
         to be added to the generated cookie.
+      service.forceCookieOutput - Normally False. Set to True to force
+        output of the Set-Cookie header during this request.
     """
     _expiredSessionIdentifier = 'expired session'
 
@@ -552,6 +554,7 @@ class SessionService(object):
         self._cookieName = cookieName
         self._cookieExpiration = cookieExpiration
         self.cookieAttributes = dict(cookieAttributes)
+        self.forceCookieOutput = False
         self._fieldName = fieldName
 
         self._session = None
@@ -615,7 +618,8 @@ class SessionService(object):
         
     def addCookie(self, headers):
         """Adds Set-Cookie header if needed."""
-        if not self.encodesSessionInURL and self._shouldAddCookie():
+        if not self.encodesSessionInURL and \
+               (self._shouldAddCookie() or self.forceCookieOutput):
             if self._session is not None:
                 sessId = self._sessionIdentifier()
                 expireCookie = not self._session.isValid

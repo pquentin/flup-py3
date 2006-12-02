@@ -27,7 +27,7 @@
 __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
 
-from resolver import *
+from flup.resolver.resolver import *
 
 __all__ = ['ModuleResolver']
 

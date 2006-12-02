@@ -34,6 +34,15 @@ import select
 import errno
 import signal
 
+try:
+    import fcntl
+except ImportError:
+    def setCloseOnExec(sock):
+        pass
+else:
+    def setCloseOnExec(sock):
+        fcntl.fcntl(sock.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+
 # If running Python < 2.4, require eunuchs module for socket.socketpair().
 # See <http://www.inoi.fi/open/trac/eunuchs>.
 if not hasattr(socket, 'socketpair'):
@@ -52,15 +61,6 @@ if not hasattr(socket, 'socketpair'):
         return p, c
 
     socket.socketpair = socketpair
-
-try:
-    import fcntl
-except ImportError:
-    def setCloseOnExec(sock):
-        pass
-else:
-    def setCloseOnExec(sock):
-        fcntl.fcntl(sock.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
 
 class PreforkServer(object):
     """

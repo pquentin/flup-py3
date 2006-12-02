@@ -82,8 +82,8 @@ __version__ = '$Revision$'
 import socket
 import logging
 
-from ajp_base import BaseAJPServer, Connection
-from threadedserver import ThreadedServer
+from flup.server.ajp_base import BaseAJPServer, Connection
+from flup.server.threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
 

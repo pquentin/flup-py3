@@ -31,7 +31,7 @@ import sys
 import os
 import imp
 
-from resolver import *
+from flup.resolver.resolver import *
 
 __all__ = ['ImportingModuleResolver']
 

@@ -51,8 +51,8 @@ __version__ = '$Revision$'
 
 import os
 
-from fcgi_base import BaseFCGIServer, FCGI_RESPONDER
-from threadedserver import ThreadedServer
+from flup.server.fcgi_base import BaseFCGIServer, FCGI_RESPONDER
+from flup.server.threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
 

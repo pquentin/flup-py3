@@ -33,8 +33,6 @@ import select
 import signal
 import errno
 
-from threadpool import ThreadPool
-
 try:
     import fcntl
 except ImportError:
@@ -43,6 +41,8 @@ except ImportError:
 else:
     def setCloseOnExec(sock):
         fcntl.fcntl(sock.fileno(), fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+
+from flup.server.threadpool import ThreadPool
 
 __all__ = ['ThreadedServer']
 

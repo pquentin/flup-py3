@@ -51,9 +51,9 @@ __version__ = '$Revision$'
 
 import os
 
-from fcgi_base import BaseFCGIServer
-from fcgi_base import FCGI_MAX_CONNS, FCGI_MAX_REQS, FCGI_MPXS_CONNS
-from preforkserver import PreforkServer
+from flup.server.fcgi_base import BaseFCGIServer, \
+     FCGI_MAX_CONNS, FCGI_MAX_REQS, FCGI_MPXS_CONNS
+from flup.server.preforkserver import PreforkServer
 
 __all__ = ['WSGIServer']
 

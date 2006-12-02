@@ -66,8 +66,8 @@ __version__ = '$Revision$'
 import logging
 import socket
 
-from scgi_base import BaseSCGIServer, Connection
-from preforkserver import PreforkServer
+from flup.server.scgi_base import BaseSCGIServer, Connection
+from flup.server.preforkserver import PreforkServer
 
 __all__ = ['WSGIServer']
 

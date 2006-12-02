@@ -66,8 +66,8 @@ __version__ = '$Revision$'
 import logging
 import socket
 
-from scgi_base import BaseSCGIServer, Connection
-from threadedserver import ThreadedServer
+from flup.server.scgi_base import BaseSCGIServer, Connection
+from flup.server.threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
 

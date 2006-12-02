@@ -29,7 +29,7 @@ __version__ = '$Revision$'
 
 import re
 
-from resolver import *
+from flup.resolver.resolver import *
 
 __all__ = ['ComplexResolver']
 

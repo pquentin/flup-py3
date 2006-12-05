@@ -924,6 +924,9 @@ class BaseAJPServer(object):
         environ['PATH_INFO'] = value[len(scriptName):]
         environ['SCRIPT_NAME'] = scriptName
 
+        if not environ.has_key('QUERY_STRING'):
+            environ['QUERY_STRING'] = ''
+
     def error(self, request):
         """
         Override to provide custom error handling. Ideally, however,

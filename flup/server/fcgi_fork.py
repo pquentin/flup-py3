@@ -162,4 +162,6 @@ if __name__ == '__main__':
         yield '</table>\n' \
               '</body></html>\n'
 
+    from wsgiref import validate
+    test_app = validate.validator(test_app)
     WSGIServer(test_app).run()

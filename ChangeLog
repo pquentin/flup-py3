@@ -1,5 +1,10 @@
 2006-12-05  Allan Saddi  <asaddi@sahara.flup.org>
 
+	* Update servers to default to an empty QUERY_STRING if
+	  not present in the environ.
+
+	* Update gzip.py: compresslevel -> compress_level
+
 	* Update gzip.py by updating docstrings and renaming
 	  classes/methods/functions to better follow Python naming
 	  conventions. NB: mimeTypes keyword parameter is now

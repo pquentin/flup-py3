@@ -121,7 +121,7 @@ class _GzipMiddleware(object):
     This class is private. See ``GzipMiddleware`` for the public interface.
     """
 
-    def __init__(self, start_response, mime_types, compresslevel):
+    def __init__(self, start_response, mime_types, compress_level):
         self._start_response = start_response
         self._mime_types = mime_types
 
@@ -131,7 +131,7 @@ class _GzipMiddleware(object):
         # See GzipFile.__init__ and GzipFile._init_write in gzip.py
         self._crc = zlib.crc32('')
         self._size = 0
-        self._compress = zlib.compressobj(compresslevel,
+        self._compress = zlib.compressobj(compress_level,
                                           zlib.DEFLATED,
                                           -zlib.MAX_WBITS,
                                           zlib.DEF_MEM_LEVEL,
@@ -206,7 +206,7 @@ class GzipMiddleware(object):
     ``Accept-Encoding`` request header).
     """
 
-    def __init__(self, application, mime_types=None, compresslevel=9):
+    def __init__(self, application, mime_types=None, compress_level=9):
         """Initializes this GzipMiddleware.
 
         ``mime_types``
@@ -214,7 +214,7 @@ class GzipMiddleware(object):
             expressions are accepted. Defaults to ``[text/.*]`` if not
             specified.
 
-        ``compresslevel``
+        ``compress_level``
             The gzip compression level, an integer from 1 to 9; 1 is the
             fastest and produces the least compression, and 9 is the slowest,
             producing the most compression. The default is 9.
@@ -224,7 +224,7 @@ class GzipMiddleware(object):
 
         self._application = application
         self._mime_types = [re.compile(m) for m in mime_types]
-        self._compresslevel = compresslevel
+        self._compress_level = compress_level
 
     def __call__(self, environ, start_response):
         """WSGI application interface."""
@@ -235,7 +235,7 @@ class GzipMiddleware(object):
 
         # All of the work is done in _GzipMiddleware and _GzipIterWrapper.
         g = _GzipMiddleware(start_response, self._mime_types,
-                            self._compresslevel)
+                            self._compress_level)
 
         result = self._application(environ, g.start_response)
 

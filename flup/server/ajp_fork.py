@@ -191,6 +191,8 @@ if __name__ == '__main__':
         yield '</table>\n' \
               '</body></html>\n'
 
+    from wsgiref import validate
+    test_app = validate.validator(test_app)
     # Explicitly set bindAddress to *:8009 for testing.
     WSGIServer(test_app,
                bindAddress=('', 8009), allowedServers=None,

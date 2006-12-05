@@ -1134,6 +1134,8 @@ class BaseFCGIServer(object):
             environ['SCRIPT_NAME'] = ''
         if not environ.has_key('PATH_INFO'):
             environ['PATH_INFO'] = ''
+        if not environ.has_key('QUERY_STRING'):
+            environ['QUERY_STRING'] = ''
 
         # If any of these are missing, it probably signifies a broken
         # server...

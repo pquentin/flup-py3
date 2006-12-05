@@ -1,3 +1,10 @@
+2006-12-05  Allan Saddi  <asaddi@sahara.flup.org>
+
+	* Update gzip.py by updating docstrings and renaming
+	  classes/methods/functions to better follow Python naming
+	  conventions. NB: mimeTypes keyword parameter is now
+	  mime_types.
+
 2006-12-02  Allan Saddi  <asaddi@europa.saddi.net>
 
 	* Change intra-package imports into absolute imports.

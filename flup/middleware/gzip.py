@@ -24,26 +24,34 @@
 #
 # $Id$
 
+"""WSGI response gzipper middleware.
+
+This gzip middleware component differentiates itself from others in that
+it (hopefully) follows the spec more closely. Namely with regard to the
+application iterator and buffering. (It doesn't buffer.) See
+`Middleware Handling of Block Boundaries`_.
+
+Of course this all comes with a price... just LOOK at this mess! :)
+
+The inner workings of gzip and the gzip file format were gleaned from gzip.py.
+
+.. _Middleware Handling of Block Boundaries: http://www.python.org/dev/peps/pep-0333/#middleware-handling-of-block-boundaries
+"""
+
 __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
+
 
 import struct
 import time
 import zlib
 import re
 
+
 __all__ = ['GzipMiddleware']
 
-# This gzip middleware component differentiates itself from others in that
-# it (hopefully) follows the spec more closely. Namely with regard to the
-# application iterator and buffering. (It doesn't buffer.)
-# See <http://www.python.org/peps/pep-0333.html#middleware-handling-of-block-boundaries>
-#
-# Of course this all comes with a price... just LOOK at this mess! :)
-#
-# The inner workings of gzip and the gzip file format were gleaned from gzip.py
 
-def _gzipHeader():
+def _gzip_header():
     """Returns a gzip header (with no filename)."""
     # See GzipFile._write_gzip_header in gzip.py
     return '\037\213' \
@@ -53,24 +61,27 @@ def _gzipHeader():
            '\002' \
            '\377'
 
-class _iterWrapper(object):
-    """
-    gzip iterator wrapper. It ensures that: the application iterator's close()
-    method (if any) is called by the parent server; and at least one value
-    is yielded each time the application's iterator yields a value.
+
+class _GzipIterWrapper(object):
+    """gzip application iterator wrapper.
+
+    It ensures that: the application iterator's ``close`` method (if any) is
+    called by the parent server; and at least one value is yielded each time
+    the application's iterator yields a value.
 
     If the application's iterator yields N values, this iterator will yield
     N+1 values. This is to account for the gzip trailer.
     """
-    def __init__(self, appIter, gzipMiddleware):
-        self._g = gzipMiddleware
-        self._next = iter(appIter).next
 
-        self._last = False # True if appIter has yielded last value.
-        self._trailerSent = False
+    def __init__(self, app_iter, gzip_middleware):
+        self._g = gzip_middleware
+        self._next = iter(app_iter).next
 
-        if hasattr(appIter, 'close'):
-            self.close = appIter.close
+        self._last = False # True if app_iter has yielded last value.
+        self._trailer_sent = False
+
+        if hasattr(app_iter, 'close'):
+            self.close = app_iter.close
 
     def __iter__(self):
         return self
@@ -88,32 +99,34 @@ class _iterWrapper(object):
                 self._last = True
 
         if not self._last:
-            if self._g.gzipOk:
-                return self._g.gzipData(data)
+            if self._g.gzip_ok:
+                return self._g.gzip_data(data)
             else:
                 return data
         else:
             # See if trailer needs to be sent.
-            if self._g.headerSent and not self._trailerSent:
-                self._trailerSent = True
-                return self._g.gzipTrailer()
+            if self._g.header_sent and not self._trailer_sent:
+                self._trailer_sent = True
+                return self._g.gzip_trailer()
             # Otherwise, that's the end of this iterator.
             raise StopIteration
 
-class _gzipMiddleware(object):
-    """
-    The actual gzip middleware component. Holds compression state as well
-    implementations of start_response and write. Instantiated before each
-    call to the underlying application.
 
-    This class is private. See GzipMiddleware for the public interface.
+class _GzipMiddleware(object):
+    """The actual gzip middleware component.
+
+    Holds compression state as well implementations of ``start_response`` and
+    ``write``. Instantiated before each call to the underlying application.
+
+    This class is private. See ``GzipMiddleware`` for the public interface.
     """
-    def __init__(self, start_response, mimeTypes, compresslevel):
+
+    def __init__(self, start_response, mime_types, compresslevel):
         self._start_response = start_response
-        self._mimeTypes = mimeTypes
+        self._mime_types = mime_types
 
-        self.gzipOk = False
-        self.headerSent = False
+        self.gzip_ok = False
+        self.header_sent = False
 
         # See GzipFile.__init__ and GzipFile._init_write in gzip.py
         self._crc = zlib.crc32('')
@@ -124,14 +137,14 @@ class _gzipMiddleware(object):
                                           zlib.DEF_MEM_LEVEL,
                                           0)
 
-    def gzipData(self, data):
-        """
-        Compresses the given data, prepending the gzip header if necessary.
+    def gzip_data(self, data):
+        """Compresses the given data, prepending the gzip header if necessary.
+
         Returns the result as a string.
         """
-        if not self.headerSent:
-            self.headerSent = True
-            out = _gzipHeader()
+        if not self.header_sent:
+            self.header_sent = True
+            out = _gzip_header()
         else:
             out = ''
 
@@ -143,14 +156,16 @@ class _gzipMiddleware(object):
             out += self._compress.compress(data)
         return out
         
-    def gzipTrailer(self):
+    def gzip_trailer(self):
+        """Returns the gzip trailer."""
         # See GzipFile.close in gzip.py
         return self._compress.flush() + \
                struct.pack('<l', self._crc) + \
                struct.pack('<L', self._size & 0xffffffffL)
 
     def start_response(self, status, headers, exc_info=None):
-        self.gzipOk = False
+        """WSGI ``start_response`` implementation."""
+        self.gzip_ok = False
 
         # Scan the headers. Only allow gzip compression if the Content-Type
         # is one that we're flagged to compress AND the headers do not
@@ -159,15 +174,15 @@ class _gzipMiddleware(object):
             name = name.lower()
             if name == 'content-type':
                 value = value.split(';')[0].strip()
-                for p in self._mimeTypes:
+                for p in self._mime_types:
                     if p.match(value) is not None:
-                        self.gzipOk = True
-                        break
+                        self.gzip_ok = True
+                        break  # NB: Breaks inner loop only
             elif name == 'content-encoding':
-                self.gzipOk = False
+                self.gzip_ok = False
                 break
 
-        if self.gzipOk:
+        if self.gzip_ok:
             # Remove Content-Length, if present, because compression will
             # most surely change it. (And unfortunately, we can't predict
             # the final size...)
@@ -177,31 +192,38 @@ class _gzipMiddleware(object):
 
         _write = self._start_response(status, headers, exc_info)
 
-        if self.gzipOk:
+        if self.gzip_ok:
             def write_gzip(data):
-                _write(self.gzipData(data))
+                _write(self.gzip_data(data))
             return write_gzip
         else:
             return _write
 
+
 class GzipMiddleware(object):
+    """WSGI middleware component that gzip compresses the application's
+    response (if the client supports gzip compression - gleaned from the
+    ``Accept-Encoding`` request header).
     """
-    WSGI middleware component that gzip compresses the application's output
-    (if the client supports gzip compression - gleaned  from the
-    Accept-Encoding request header).
 
-    mimeTypes should be a list of Content-Types that are OK to compress.
+    def __init__(self, application, mime_types=None, compresslevel=9):
+        """Initializes this GzipMiddleware.
 
-    compresslevel is the gzip compression level, an integer from 1 to 9; 1
-    is the fastest and produces the least compression, and 9 is the slowest,
-    producing the most compression.
-    """
-    def __init__(self, application, mimeTypes=None, compresslevel=9):
-        if mimeTypes is None:
-            mimeTypes = ['text/.*']
+        ``mime_types``
+            A list of Content-Types that are OK to compress. Regular
+            expressions are accepted. Defaults to ``[text/.*]`` if not
+            specified.
+
+        ``compresslevel``
+            The gzip compression level, an integer from 1 to 9; 1 is the
+            fastest and produces the least compression, and 9 is the slowest,
+            producing the most compression. The default is 9.
+        """
+        if mime_types is None:
+            mime_types = ['text/.*']
 
         self._application = application
-        self._mimeTypes = [re.compile(m) for m in mimeTypes]
+        self._mime_types = [re.compile(m) for m in mime_types]
         self._compresslevel = compresslevel
 
     def __call__(self, environ, start_response):
@@ -211,8 +233,8 @@ class GzipMiddleware(object):
         if 'gzip' not in environ.get('HTTP_ACCEPT_ENCODING', ''):
             return self._application(environ, start_response)
 
-        # All of the work is done in _gzipMiddleware and _iterWrapper.
-        g = _gzipMiddleware(start_response, self._mimeTypes,
+        # All of the work is done in _GzipMiddleware and _GzipIterWrapper.
+        g = _GzipMiddleware(start_response, self._mime_types,
                             self._compresslevel)
 
         result = self._application(environ, g.start_response)
@@ -231,22 +253,27 @@ class GzipMiddleware(object):
                 # Hmmm, if we get a StopIteration here, the application's
                 # broken (__len__ lied!)
                 data = i.next()
-                if g.gzipOk:
-                    return [g.gzipData(data) + g.gzipTrailer()]
+                if g.gzip_ok:
+                    return [g.gzip_data(data) + g.gzip_trailer()]
                 else:
                     return [data]
             finally:
                 if hasattr(result, 'close'):
                     result.close()
 
-        return _iterWrapper(result, g)
+        return _GzipIterWrapper(result, g)
+
 
 if __name__ == '__main__':
-    def myapp(environ, start_response):
+    def app(environ, start_response):
         start_response('200 OK', [('Content-Type', 'text/html')])
-        return ['Hello World!\n']
-    app = GzipMiddleware(myapp)
+        yield 'Hello World!\n'
 
-    from ajp import WSGIServer
+    from wsgiref import validate
+    app = validate.validator(app)
+    app = GzipMiddleware(app)
+    app = validate.validator(app)
+    
+    from flup.server.ajp import WSGIServer
     import logging
     WSGIServer(app, loggingLevel=logging.DEBUG).run()

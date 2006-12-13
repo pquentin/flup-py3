@@ -652,7 +652,7 @@ class SessionService(object):
     # Public API
 
     def _get_session(self):
-        assert not self._closed
+        if __debug__: assert not self._closed
         if self._session is None:
             self._session = self._store.createSession()
             self._newSession = True
@@ -664,20 +664,20 @@ class SessionService(object):
                        'client')
 
     def _get_hasSession(self):
-        assert not self._closed
+        if __debug__: assert not self._closed
         return self._session is not None
     hasSession = property(_get_hasSession, None, None,
                           'True if a Session currently exists for this client')
 
     def _get_isSessionNew(self):
-        assert not self._closed
+        if __debug__: assert not self._closed
         return self._newSession
     isSessionNew = property(_get_isSessionNew, None, None,
                             'True if the Session was created in this '
                             'transaction')
 
     def _get_hasSessionExpired(self):
-        assert not self._closed
+        if __debug__: assert not self._closed
         return self._expired
     hasSessionExpired = property(_get_hasSessionExpired, None, None,
                                  'True if the client was associated with a '
@@ -687,7 +687,7 @@ class SessionService(object):
 
     def encodeURL(self, url):
         """Encodes session ID in URL, if necessary."""
-        assert not self._closed
+        if __debug__: assert not self._closed
         if not self.encodesSessionInURL or self._session is None:
             return url
         u = list(urlparse.urlsplit(url))

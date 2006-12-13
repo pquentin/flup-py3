@@ -76,4 +76,6 @@ class Resolver(object):
             pathInfo = '/' + pathInfo
         request.environ['SCRIPT_NAME'] = scriptName
         request.environ['PATH_INFO'] = pathInfo + params
-        assert request.scriptName + request.pathInfo == origTotalPath
+        if __debug__:
+            assert request.scriptName + request.pathInfo == origTotalPath
+

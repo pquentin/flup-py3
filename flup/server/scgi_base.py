@@ -36,7 +36,6 @@ import cStringIO as StringIO
 import signal
 import datetime
 import os
-import warnings
 
 # Threads are required. If you want a non-threaded (forking) version, look at
 # SWAP <http://www.idyll.org/~t/www-tools/wsgi/>.
@@ -274,7 +273,7 @@ class BaseSCGIServer(object):
     # What Request class to use.
     requestClass = Request
 
-    def __init__(self, application, scriptName=NoDefault, environ=None,
+    def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 4000), umask=None,
                  allowedServers=NoDefault,
@@ -472,45 +471,29 @@ class BaseSCGIServer(object):
 
     def _sanitizeEnv(self, environ):
         """Fill-in/deduce missing values in environ."""
-        # Ensure QUERY_STRING exists
-        if not environ.has_key('QUERY_STRING'):
-            environ['QUERY_STRING'] = ''
-
-        # Check WSGI_SCRIPT_NAME
+        # Namely SCRIPT_NAME/PATH_INFO
         scriptName = environ.get('WSGI_SCRIPT_NAME')
         if scriptName is None:
             scriptName = self.scriptName
-        else:
-            warnings.warn('WSGI_SCRIPT_NAME environment variable for scgi '
-                          'servers is deprecated',
-                          DeprecationWarning)
-            if scriptName.lower() == 'none':
-                scriptName = None
+        elif scriptName.lower() == 'none':
+            scriptName = None
 
         if scriptName is None:
             # Do nothing (most likely coming from cgi2scgi)
             return
 
-        if scriptName is NoDefault:
-            # Pull SCRIPT_NAME/PATH_INFO from environment, with empty defaults
-            if not environ.has_key('SCRIPT_NAME'):
-                environ['SCRIPT_INFO'] = ''
-            if not environ.has_key('PATH_INFO'):
-                environ['PATH_INFO'] = ''
-        else:
-            # Configured scriptName
-            warnings.warn('Configured SCRIPT_NAME is deprecated\n'
-                          'Do not use WSGI_SCRIPT_NAME or the scriptName\n'
-                          'keyword parameter -- they will be going away',
-                          DeprecationWarning)
+        value = environ['SCRIPT_NAME']
+        # Pull PATH_INFO from environ, if it exists. (cgi2scgi actually
+        # passes it in.)
+        value += environ.get('PATH_INFO', '')
+        if not value.startswith(scriptName):
+            self.logger.warning('scriptName does not match request URI')
 
-            value = environ['SCRIPT_NAME']
-            value += environ.get('PATH_INFO', '')
-            if not value.startswith(scriptName):
-                self.logger.warning('scriptName does not match request URI')
+        environ['PATH_INFO'] = value[len(scriptName):]
+        environ['SCRIPT_NAME'] = scriptName
 
-            environ['PATH_INFO'] = value[len(scriptName):]
-            environ['SCRIPT_NAME'] = scriptName
+        if not environ.has_key('QUERY_STRING'):
+            environ['QUERY_STRING'] = ''
 
     def error(self, request):
         """

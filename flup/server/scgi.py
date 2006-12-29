@@ -66,7 +66,7 @@ __version__ = '$Revision$'
 import logging
 import socket
 
-from flup.server.scgi_base import BaseSCGIServer, Connection, NoDefault
+from flup.server.scgi_base import BaseSCGIServer, Connection
 from flup.server.threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
@@ -87,7 +87,7 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
     of preforking to be quite superior. So if your application really doesn't
     mind running in multiple processes, go use SWAP. ;)
     """
-    def __init__(self, application, scriptName=NoDefault, environ=None,
+    def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 4000), umask=None,
                  allowedServers=None,

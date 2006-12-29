@@ -1,5 +1,8 @@
 2006-12-29  Allan Saddi  <allan@saddi.com>
 
+	* Back out previous commit. PATH_INFO is still not set
+	  correctly by mod_scgi.
+
 	* Deprecate WSGI_SCRIPT_NAME and scriptName in scgi_base.
 	  Modern versions of mod_scgi correctly set SCRIPT_NAME &
 	  PATH_INFO.

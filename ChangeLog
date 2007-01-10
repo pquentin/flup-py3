@@ -1,3 +1,8 @@
+2007-01-10  Allan Saddi  <allan@saddi.com>
+
+	* Support gzip compression of XHTML pages using the
+	  correct MIME type.
+
 2006-12-29  Allan Saddi  <allan@saddi.com>
 
 	* Deprecate WSGI_SCRIPT_NAME and scriptName in scgi_base.

@@ -220,7 +220,7 @@ class GzipMiddleware(object):
             producing the most compression. The default is 9.
         """
         if mime_types is None:
-            mime_types = ['text/.*']
+            mime_types = ['text/', r'''application/(?:.+\+)?xml$''']
 
         self._application = application
         self._mime_types = [re.compile(m) for m in mime_types]

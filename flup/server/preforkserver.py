@@ -47,7 +47,7 @@ else:
 # See <http://www.inoi.fi/open/trac/eunuchs>.
 if not hasattr(socket, 'socketpair'):
     try:
-        import eunuchs
+        import eunuchs.socketpair
     except ImportError:
         # TODO: Other alternatives? Perhaps using os.pipe()?
         raise ImportError, 'Requires eunuchs module for Python < 2.4'

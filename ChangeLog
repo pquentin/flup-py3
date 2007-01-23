@@ -1,3 +1,7 @@
+2007-01-22  Allan Saddi  <allan@saddi.com>
+
+	* Fix eunuchs import issue.
+
 2007-01-10  Allan Saddi  <allan@saddi.com>
 
 	* Support gzip compression of XHTML pages using the

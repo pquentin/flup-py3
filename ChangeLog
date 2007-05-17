@@ -1,3 +1,8 @@
+2007-05-17  Allan Saddi  <allan@saddi.com>
+
+	* Fix fcgi_fork so it can run on Solaris. Thanks to
+	  Basil Crow for the patch.
+
 2007-01-22  Allan Saddi  <allan@saddi.com>
 
 	* Fix eunuchs import issue.

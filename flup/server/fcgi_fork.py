@@ -97,9 +97,12 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
             import resource
             # Attempt to glean the maximum number of connections
             # from the OS.
-            maxProcs = resource.getrlimit(resource.RLIMIT_NPROC)[0]
-            maxConns = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            maxConns = min(maxConns, maxProcs)
+            try:
+                maxProcs = resource.getrlimit(resource.RLIMIT_NPROC)[0]
+                maxConns = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+                maxConns = min(maxConns, maxProcs)
+            except AttributeError:
+                maxConns = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
         except ImportError:
             maxConns = 100 # Just some made up number.
         maxReqs = maxConns

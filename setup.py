@@ -5,9 +5,9 @@ use_setuptools()
 from setuptools import setup, find_packages
 setup(
     name = 'flup',
-    version = '0.5',
+    version = '1.0',
     packages = find_packages(),
-    zip_safe = True, # Despite flup.resolver.importingmodule
+    zip_safe = True,
     
     entry_points = """
     [paste.server_factory]
@@ -24,7 +24,7 @@ setup(
     
     author = 'Allan Saddi',
     author_email = 'allan@saddi.com',
-    description = 'Random assortment of WSGI servers, middleware',
+    description = 'Random assortment of WSGI servers',
     license = 'BSD',
     url='http://www.saddi.com/software/flup/',
     classifiers = [

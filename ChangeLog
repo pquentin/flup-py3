@@ -8,6 +8,11 @@
 	* Prevent ThreadPool inconsistences if an exception is
 	  actually raised. Thanks to Tim Chen for the patch.
 
+2007-06-05  Allan Saddi  <allan@saddi.com>
+
+	* Remove publisher and middleware packages.
+	* Add cgi server for completeness.
+
 2007-05-17  Allan Saddi  <allan@saddi.com>
 
 	* Fix fcgi_fork so it can run on Solaris. Thanks to
@@ -36,9 +41,7 @@
 
 	* Update servers to default to an empty QUERY_STRING if
 	  not present in the environ.
-
 	* Update gzip.py: compresslevel -> compress_level
-
 	* Update gzip.py by updating docstrings and renaming
 	  classes/methods/functions to better follow Python naming
 	  conventions. NB: mimeTypes keyword parameter is now
@@ -65,10 +68,8 @@
 2006-11-24  Allan Saddi  <allan@saddi.com>
 
 	* Add *_thread egg entry-point aliases.
-
 	* Add UNIX domain socket support to scgi, scgi_fork,
 	  scgi_app.
-
 	* Add flup.client package which contains various
 	  WSGI -> connector client implentations. (So far: FastCGI,
 	  and SCGI.)

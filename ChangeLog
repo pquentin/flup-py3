@@ -1,3 +1,8 @@
+2007-07-14  Allan Saddi  <allan@saddi.com>
+
+	* Prevent ThreadPool inconsistences if an exception is
+	  actually raised. Thanks to Tim Chen for the patch.
+
 2007-05-17  Allan Saddi  <allan@saddi.com>
 
 	* Fix fcgi_fork so it can run on Solaris. Thanks to

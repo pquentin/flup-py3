@@ -100,7 +100,12 @@ class ThreadPool(object):
 
             self._lock.release()
 
-            job.run()
+            try:
+                job.run()
+            except:
+                # FIXME: This should really be reported somewhere.
+                # But we can't simply report it to stderr because of fcgi
+                pass
 
             self._lock.acquire()
 

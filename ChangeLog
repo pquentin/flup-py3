@@ -1,3 +1,8 @@
+2007-09-10  Allan Saddi  <allan@saddi.com>
+
+	* Fix readline implementations so size argument is checked
+	  earlier.
+
 2007-07-14  Allan Saddi  <allan@saddi.com>
 
 	* Prevent ThreadPool inconsistences if an exception is

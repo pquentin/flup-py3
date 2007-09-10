@@ -398,15 +398,15 @@ class InputStream(object):
                     newPos = self._avail
                     break
                 else:
+                    if length is not None and len(self._buf) >= length + self._pos:
+                        newPos = self._pos + length
+                        break
                     # Wait for more to come.
                     self._waitForData()
                     continue
             else:
                 newPos = i + 1
                 break
-        if length is not None:
-            if self._pos + length < newPos:
-                newPos = self._pos + length
         r = self._buf[self._pos:newPos]
         self._pos = newPos
         self._shrinkBuffer()

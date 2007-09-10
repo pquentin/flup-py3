@@ -27,9 +27,8 @@ setup(
     description = 'Random assortment of WSGI servers, middleware',
     license = 'BSD',
     url='http://www.saddi.com/software/flup/',
-    download_url = 'http://svn.saddi.com/flup/trunk#egg=flup-dev',
     classifiers = [
-    'Development Status :: 4 - Beta',
+    'Development Status :: 5 - Production/Stable',
     'Environment :: Web Environment',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: BSD License',

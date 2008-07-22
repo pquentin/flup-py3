@@ -1136,14 +1136,19 @@ class BaseFCGIServer(object):
         """Ensure certain values are present, if required by WSGI."""
         if not environ.has_key('SCRIPT_NAME'):
             environ['SCRIPT_NAME'] = ''
+
+        reqUri = None
+        if environ.has_key('REQUEST_URI'):
+            reqUri = environ['REQUEST_URI'].split('?', 1)
+
         if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
-            if environ.has_key('REQUEST_URI'):
-                environ['PATH_INFO'] = environ['REQUEST_URI'].partition('?')[0]
+            if reqUri is not None:
+                environ['PATH_INFO'] = reqUri[0]
             else:
                 environ['PATH_INFO'] = ''
         if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
-            if environ.has_key('REQUEST_URI'):
-                environ['QUERY_STRING'] = environ['REQUEST_URI'].partition('?')[2]
+            if reqUri is not None and len(reqUri) > 1:
+                environ['QUERY_STRING'] = reqUri[1]
             else:
                 environ['QUERY_STRING'] = ''
 

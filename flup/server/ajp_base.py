@@ -924,8 +924,11 @@ class BaseAJPServer(object):
         environ['PATH_INFO'] = value[len(scriptName):]
         environ['SCRIPT_NAME'] = scriptName
 
-        if not environ.has_key('QUERY_STRING'):
-            environ['QUERY_STRING'] = ''
+        if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
+            if environ.has_key['REQUEST_URI']:
+                environ['QUERY_STRING'] = environ['REQUEST_URI'].partition('?')[2]
+            else:
+                environ['QUERY_STRING'] = ''
 
     def error(self, request):
         """

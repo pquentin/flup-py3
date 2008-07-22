@@ -1,5 +1,7 @@
 2008-07-22  Allan Saddi  <allan@saddi.com>
 
+	* Release 1.0.1
+
 	* Attempt to deduce missing PATH_INFO and/or QUERY_STRING from
 	  REQUEST_URI, if present. Patch provided by Richard Davies.
 

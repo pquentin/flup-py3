@@ -1,3 +1,9 @@
+2008-07-23  Allan Saddi  <allan@saddi.com>
+
+	* Add support for configuring UNIX domain sockets (for servers that
+	  support them) in the paste.server_factory implementations. Thanks
+	  to Dan Roberts for the code.
+
 2008-07-22  Allan Saddi  <allan@saddi.com>
 
 	* Release 1.0.1

@@ -1,3 +1,9 @@
+2008-08-20  Allan Saddi  <allan@saddi.com>
+
+	* Add support for setting umask for UNIX domain sockets from
+	  paste.server_factory implementations. Thanks to Michal Suszko
+	  for the patch.
+
 2008-07-23  Allan Saddi  <allan@saddi.com>
 
 	* Add support for configuring UNIX domain sockets (for servers that

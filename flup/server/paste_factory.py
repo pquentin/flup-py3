@@ -6,6 +6,8 @@ def helper(wsgiServerClass, global_conf, host, port, **local_conf):
     if 'socket' in local_conf:
         local_conf['bindAddress'] = local_conf['socket']
         del local_conf['socket']
+        if 'umask' in local_conf:
+            local_conf['umask'] = int(local_conf['umask'], 8)
     else:
         local_conf['bindAddress'] = (host, int(port))
     

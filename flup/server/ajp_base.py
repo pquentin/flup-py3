@@ -886,8 +886,8 @@ class BaseAJPServer(object):
             assert type(response_headers) is list, 'Headers must be a list'
             if __debug__:
                 for name,val in response_headers:
-                    assert type(name) is str, 'Header names must be strings'
-                    assert type(val) is str, 'Header values must be strings'
+                    assert type(name) is str, 'Header name "%s" must be a string' % name
+                    assert type(val) is str, 'Value of header "%s" must be a string' % name
 
             headers_set[:] = [status, response_headers]
             return write

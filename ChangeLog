@@ -1,3 +1,8 @@
+2008-09-11  Allan Saddi  <allan@saddi.com>
+
+	* Add an indication as to which header fails assertion when
+	  passing in non-string header names and/or values.
+
 2008-08-20  Allan Saddi  <allan@saddi.com>
 
 	* Add support for setting umask for UNIX domain sockets from

@@ -33,6 +33,8 @@ import socket
 import select
 import errno
 import signal
+import random
+import time
 
 try:
     import fcntl
@@ -310,7 +312,19 @@ class PreforkServer(object):
     def _child(self, sock, parent):
         """Main loop for children."""
         requestCount = 0
-        
+
+        # Re-seed random module
+        preseed = ''
+        # urandom only exists in Python >= 2.4
+        if hasattr(os, 'urandom'):
+            try:
+                preseed = os.urandom(16)
+            except NotImplementedError:
+                pass
+        # Have doubts about this. random.seed will just hash the string
+        random.seed('%s%s%s' % (preseed, os.getpid(), time.time()))
+        del preseed
+
         while True:
             # Wait for any activity on the main socket or parent socket.
             r, w, e = select.select([sock, parent], [], [])

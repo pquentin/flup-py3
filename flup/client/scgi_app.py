@@ -65,11 +65,11 @@ class SCGIApp(object):
         # TODO: Anything not from environ that needs to be sent also?
 
         content_length = int(environ.get('CONTENT_LENGTH') or 0)
-        if headers.has_key('CONTENT_LENGTH'):
+        if 'CONTENT_LENGTH' in headers:
             del headers['CONTENT_LENGTH']
             
         headers_out = ['CONTENT_LENGTH', str(content_length), 'SCGI', '1']
-        for k,v in headers.items():
+        for k,v in list(headers.items()):
             headers_out.append(k)
             headers_out.append(v)
         headers_out.append('') # For trailing NUL
@@ -150,7 +150,7 @@ class SCGIApp(object):
 
     def _defaultFilterEnviron(self, environ):
         result = {}
-        for n in environ.keys():
+        for n in list(environ.keys()):
             for p in self._environPrefixes:
                 if n.startswith(p):
                     result[n] = environ[n]
@@ -163,7 +163,7 @@ class SCGIApp(object):
 
     def _lightFilterEnviron(self, environ):
         result = {}
-        for n in environ.keys():
+        for n in list(environ.keys()):
             if n.upper() == n:
                 result[n] = environ[n]
         return result

@@ -136,13 +136,13 @@ def encode_pair(name, value):
     if nameLength < 128:
         s = chr(nameLength)
     else:
-        s = struct.pack('!L', nameLength | 0x80000000L)
+        s = struct.pack('!L', nameLength | 0x80000000)
 
     valueLength = len(value)
     if valueLength < 128:
         s += chr(valueLength)
     else:
-        s += struct.pack('!L', valueLength | 0x80000000L)
+        s += struct.pack('!L', valueLength | 0x80000000)
 
     return s + name + value
 
@@ -170,7 +170,7 @@ class Record(object):
         while length:
             try:
                 data = sock.recv(length)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
@@ -227,7 +227,7 @@ class Record(object):
         while length:
             try:
                 sent = sock.send(data)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
@@ -394,7 +394,7 @@ class FCGIApp(object):
             return sock
 
         # To be done when I have more time...
-        raise NotImplementedError, 'Launching and managing FastCGI programs not yet implemented'
+        raise NotImplementedError('Launching and managing FastCGI programs not yet implemented')
     
     def _fcgiGetValues(self, sock, vars):
         # Construct FCGI_GET_VALUES record
@@ -421,7 +421,7 @@ class FCGIApp(object):
     def _fcgiParams(self, sock, requestId, params):
         rec = Record(FCGI_PARAMS, requestId)
         data = []
-        for name,value in params.items():
+        for name,value in list(params.items()):
             data.append(encode_pair(name, value))
         data = ''.join(data)
         rec.contentData = data
@@ -435,7 +435,7 @@ class FCGIApp(object):
 
     def _defaultFilterEnviron(self, environ):
         result = {}
-        for n in environ.keys():
+        for n in list(environ.keys()):
             for p in self._environPrefixes:
                 if n.startswith(p):
                     result[n] = environ[n]
@@ -448,7 +448,7 @@ class FCGIApp(object):
 
     def _lightFilterEnviron(self, environ):
         result = {}
-        for n in environ.keys():
+        for n in list(environ.keys()):
             if n.upper() == n:
                 result[n] = environ[n]
         return result

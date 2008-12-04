@@ -51,8 +51,8 @@ __version__ = '$Revision$'
 
 import os
 
-from flup.server.fcgi_base import BaseFCGIServer, FCGI_RESPONDER
-from flup.server.threadedserver import ThreadedServer
+from .fcgi_base import BaseFCGIServer, FCGI_RESPONDER
+from .threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
 
@@ -89,7 +89,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
                                 debug=debug,
                                 roles=roles)
         for key in ('jobClass', 'jobArgs'):
-            if kw.has_key(key):
+            if key in kw:
                 del kw[key]
         ThreadedServer.__init__(self, jobClass=self._connectionClass,
                                 jobArgs=(self,), **kw)
@@ -105,8 +105,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         """
         self._web_server_addrs = os.environ.get('FCGI_WEB_SERVER_ADDRS')
         if self._web_server_addrs is not None:
-            self._web_server_addrs = map(lambda x: x.strip(),
-                                         self._web_server_addrs.split(','))
+            self._web_server_addrs = [x.strip() for x in self._web_server_addrs.split(',')]
 
         sock = self._setupSocket()
 
@@ -117,7 +116,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         return ret
 
 def factory(global_conf, host=None, port=None, **local):
-    import paste_factory
+    from . import paste_factory
     return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
 
 if __name__ == '__main__':
@@ -129,11 +128,11 @@ if __name__ == '__main__':
               '<body>\n' \
               '<p>Hello World!</p>\n' \
               '<table border="1">'
-        names = environ.keys()
+        names = list(environ.keys())
         names.sort()
         for name in names:
             yield '<tr><td>%s</td><td>%s</td></tr>\n' % (
-                name, cgi.escape(`environ[name]`))
+                name, cgi.escape(repr(environ[name])))
 
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
                                 keep_blank_values=1)

@@ -38,7 +38,7 @@ import datetime
 import time
 
 # Unfortunately, for now, threads are required.
-import thread
+import _thread
 import threading
 
 __all__ = ['BaseAJPServer']
@@ -170,8 +170,8 @@ def decodeString(data, pos=0):
             return '', pos
         s = data[pos:pos+length]
         return s, pos+length+1 # Don't forget NUL
-    except Exception, e:
-        raise ProtocolError, 'decodeString: '+str(e)
+    except Exception as e:
+        raise ProtocolError('decodeString: '+str(e))
 
 def decodeRequestHeader(data, pos=0):
     """Decode a request header/value pair."""
@@ -181,14 +181,14 @@ def decodeRequestHeader(data, pos=0):
             i = ord(data[pos+1])
             name = requestHeaderTable[i]
             if name is None:
-                raise ValueError, 'bad request header code'
+                raise ValueError('bad request header code')
             pos += 2
         else:
             name, pos = decodeString(data, pos)
         value, pos = decodeString(data, pos)
         return name, value, pos
-    except Exception, e:
-        raise ProtocolError, 'decodeRequestHeader: '+str(e)
+    except Exception as e:
+        raise ProtocolError('decodeRequestHeader: '+str(e))
 
 def decodeAttribute(data, pos=0):
     """Decode a request attribute."""
@@ -210,11 +210,11 @@ def decodeAttribute(data, pos=0):
         else:
             name = attributeTable[i]
             if name is None:
-                raise ValueError, 'bad attribute code'
+                raise ValueError('bad attribute code')
         value, pos = decodeString(data, pos)
         return name, value, pos
-    except Exception, e:
-        raise ProtocolError, 'decodeAttribute: '+str(e)
+    except Exception as e:
+        raise ProtocolError('decodeAttribute: '+str(e))
 
 def encodeString(s):
     """Encode a string."""
@@ -249,7 +249,7 @@ class Packet(object):
         while length:
             try:
                 data = sock.recv(length)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
@@ -276,7 +276,7 @@ class Packet(object):
             raise EOFError
 
         if header[:2] != SERVER_PREFIX:
-            raise ProtocolError, 'invalid header'
+            raise ProtocolError('invalid header')
 
         self.length = struct.unpack('>H', header[2:4])[0]
         if self.length:
@@ -296,7 +296,7 @@ class Packet(object):
         while length:
             try:
                 sent = sock.send(data)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
@@ -427,7 +427,7 @@ class InputStream(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         r = self.readline()
         if not r:
             raise StopIteration
@@ -446,12 +446,12 @@ class InputStream(object):
         never send us an EOF (empty string argument).
         """
         if not data:
-            raise ProtocolError, 'short data'
+            raise ProtocolError('short data')
         self._bufList.append(data)
         length = len(data)
         self._avail += length
         if self._avail > self._length:
-            raise ProtocolError, 'too much data'
+            raise ProtocolError('too much data')
 
 class Request(object):
     """
@@ -616,7 +616,7 @@ class Connection(object):
         while True:
             try:
                 self.processInput()
-            except ProtocolError, e:
+            except ProtocolError as e:
                 self.logger.error("Protocol error '%s'", str(e))
                 break
             except (EOFError, KeyboardInterrupt):
@@ -642,7 +642,7 @@ class Connection(object):
             return
 
         if not pkt.length:
-            raise ProtocolError, 'unexpected empty packet'
+            raise ProtocolError('unexpected empty packet')
 
         pkttype = pkt.data[0]
         if pkttype == PKTTYPE_FWD_REQ:
@@ -654,7 +654,7 @@ class Connection(object):
         elif pkttype == PKTTYPE_CPING:
             self._cping(pkt)
         else:
-            raise ProtocolError, 'unknown packet type'
+            raise ProtocolError('unknown packet type')
 
     def _forwardRequest(self, pkt):
         """
@@ -666,7 +666,7 @@ class Connection(object):
         i = ord(pkt.data[1])
         method = methodTable[i]
         if method is None:
-            raise ValueError, 'bad method field'
+            raise ValueError('bad method field')
         req.setMethod(method)
         value, pos = decodeString(pkt.data, 2)
         req.setProtocol(value)
@@ -794,7 +794,7 @@ class BaseAJPServer(object):
         self._allowedServers = allowedServers
 
         # Used to force single-threadedness.
-        self._appLock = thread.allocate_lock()
+        self._appLock = _thread.allocate_lock()
 
         self.logger = logging.getLogger(LoggerName)
         self.logger.setLevel(loggingLevel)
@@ -873,7 +873,7 @@ class BaseAJPServer(object):
                 try:
                     if headers_sent:
                         # Re-raise if too late
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
                 finally:
                     exc_info = None # avoid dangling circular ref
             else:
@@ -906,7 +906,7 @@ class BaseAJPServer(object):
                 finally:
                     if hasattr(result, 'close'):
                         result.close()
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
@@ -925,10 +925,10 @@ class BaseAJPServer(object):
         environ['SCRIPT_NAME'] = scriptName
 
         reqUri = None
-        if environ.has_key('REQUEST_URI'):
+        if 'REQUEST_URI' in environ:
             reqUri = environ['REQUEST_URI'].split('?', 1)
 
-        if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
+        if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
             if reqUri is not None and len(reqUri) > 1:
                 environ['QUERY_STRING'] = reqUri[1]
             else:

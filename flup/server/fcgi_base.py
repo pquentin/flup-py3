@@ -31,18 +31,18 @@ import sys
 import os
 import signal
 import struct
-import cStringIO as StringIO
+import io as StringIO
 import select
 import socket
 import errno
 import traceback
 
 try:
-    import thread
+    import _thread
     import threading
     thread_available = True
 except ImportError:
-    import dummy_thread as thread
+    import _dummy_thread as thread
     import dummy_threading as threading
     thread_available = False
 
@@ -218,7 +218,7 @@ class InputStream(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         r = self.readline()
         if not r:
             raise StopIteration
@@ -414,13 +414,13 @@ def encode_pair(name, value):
     if nameLength < 128:
         s = chr(nameLength)
     else:
-        s = struct.pack('!L', nameLength | 0x80000000L)
+        s = struct.pack('!L', nameLength | 0x80000000)
 
     valueLength = len(value)
     if valueLength < 128:
         s += chr(valueLength)
     else:
-        s += struct.pack('!L', valueLength | 0x80000000L)
+        s += struct.pack('!L', valueLength | 0x80000000)
 
     return s + name + value
     
@@ -448,7 +448,7 @@ class Record(object):
         while length:
             try:
                 data = sock.recv(length)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
@@ -505,7 +505,7 @@ class Record(object):
         while length:
             try:
                 sent = sock.send(data)
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
@@ -570,11 +570,11 @@ class Request(object):
         try:
             self._flush()
             self._end(appStatus, protocolStatus)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] != errno.EPIPE:
                 raise
 
-    def _end(self, appStatus=0L, protocolStatus=FCGI_REQUEST_COMPLETE):
+    def _end(self, appStatus=0, protocolStatus=FCGI_REQUEST_COMPLETE):
         self._conn.end_request(self, appStatus, protocolStatus)
         
     def _flush(self):
@@ -597,7 +597,7 @@ class CGIRequest(Request):
         self.stderr = sys.stderr
         self.data = StringIO.StringIO()
         
-    def _end(self, appStatus=0L, protocolStatus=FCGI_REQUEST_COMPLETE):
+    def _end(self, appStatus=0, protocolStatus=FCGI_REQUEST_COMPLETE):
         sys.exit(appStatus)
 
     def _flush(self):
@@ -646,7 +646,7 @@ class Connection(object):
                 self.process_input()
             except (EOFError, KeyboardInterrupt):
                 break
-            except (select.error, socket.error), e:
+            except (select.error, socket.error) as e:
                 if e[0] == errno.EBADF: # Socket was closed by Request.
                     break
                 raise
@@ -696,7 +696,7 @@ class Connection(object):
         """
         rec.write(self._sock)
 
-    def end_request(self, req, appStatus=0L,
+    def end_request(self, req, appStatus=0,
                     protocolStatus=FCGI_REQUEST_COMPLETE, remove=True):
         """
         End a Request.
@@ -745,7 +745,7 @@ class Connection(object):
 
         if not self._multiplexed and self._requests:
             # Can't multiplex requests.
-            self.end_request(req, 0L, FCGI_CANT_MPX_CONN, remove=False)
+            self.end_request(req, 0, FCGI_CANT_MPX_CONN, remove=False)
         else:
             self._requests[inrec.requestId] = req
 
@@ -836,7 +836,7 @@ class MultiplexedConnection(Connection):
         finally:
             self._lock.release()
 
-    def end_request(self, req, appStatus=0L,
+    def end_request(self, req, appStatus=0,
                     protocolStatus=FCGI_REQUEST_COMPLETE, remove=True):
         self._lock.acquire()
         try:
@@ -862,7 +862,7 @@ class MultiplexedConnection(Connection):
             self._lock.release()
 
     def _start_request(self, req):
-        thread.start_new_thread(req.run, ())
+        _thread.start_new_thread(req.run, ())
 
     def _do_params(self, inrec):
         self._lock.acquire()
@@ -939,7 +939,7 @@ class BaseFCGIServer(object):
         self._umask = umask
         
         # Used to force single-threadedness
-        self._appLock = thread.allocate_lock()
+        self._appLock = _thread.allocate_lock()
 
         if thread_available:
             try:
@@ -977,7 +977,7 @@ class BaseFCGIServer(object):
                                  socket.SOCK_STREAM)
             try:
                 sock.getpeername()
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] == errno.ENOTSOCK:
                     # Not a socket, assume CGI context.
                     isFCGI = False
@@ -1090,7 +1090,7 @@ class BaseFCGIServer(object):
                 try:
                     if headers_sent:
                         # Re-raise if too late
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
                 finally:
                     exc_info = None # avoid dangling circular ref
             else:
@@ -1123,7 +1123,7 @@ class BaseFCGIServer(object):
                 finally:
                     if hasattr(result, 'close'):
                         result.close()
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
@@ -1134,19 +1134,19 @@ class BaseFCGIServer(object):
 
     def _sanitizeEnv(self, environ):
         """Ensure certain values are present, if required by WSGI."""
-        if not environ.has_key('SCRIPT_NAME'):
+        if 'SCRIPT_NAME' not in environ:
             environ['SCRIPT_NAME'] = ''
 
         reqUri = None
-        if environ.has_key('REQUEST_URI'):
+        if 'REQUEST_URI' in environ:
             reqUri = environ['REQUEST_URI'].split('?', 1)
 
-        if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
+        if 'PATH_INFO' not in environ or not environ['PATH_INFO']:
             if reqUri is not None:
                 environ['PATH_INFO'] = reqUri[0]
             else:
                 environ['PATH_INFO'] = ''
-        if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
+        if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
             if reqUri is not None and len(reqUri) > 1:
                 environ['QUERY_STRING'] = reqUri[1]
             else:
@@ -1158,7 +1158,7 @@ class BaseFCGIServer(object):
                              ('SERVER_NAME', 'localhost'),
                              ('SERVER_PORT', '80'),
                              ('SERVER_PROTOCOL', 'HTTP/1.0')]:
-            if not environ.has_key(name):
+            if name not in environ:
                 environ['wsgi.errors'].write('%s: missing FastCGI param %s '
                                              'required by WSGI!\n' %
                                              (self.__class__.__name__, name))

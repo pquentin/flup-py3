@@ -28,7 +28,7 @@ __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
 
 import sys
-import thread
+import _thread
 import threading
 
 class ThreadPool(object):
@@ -38,7 +38,7 @@ class ThreadPool(object):
     the number of threads that can be started, but this can be controlled
     by maxThreads.
     """
-    def __init__(self, minSpare=1, maxSpare=5, maxThreads=sys.maxint):
+    def __init__(self, minSpare=1, maxSpare=5, maxThreads=sys.maxsize):
         self._minSpare = minSpare
         self._maxSpare = maxSpare
         self._maxThreads = max(minSpare, maxThreads)
@@ -49,7 +49,7 @@ class ThreadPool(object):
 
         # Start the minimum number of worker threads.
         for i in range(maxSpare):
-            thread.start_new_thread(self._worker, ())
+            _thread.start_new_thread(self._worker, ())
 
     def addJob(self, job, allowQueuing=True):
         """
@@ -71,7 +71,7 @@ class ThreadPool(object):
                   self._workerCount < self._maxThreads:
                 self._workerCount += 1
                 self._idleCount += 1
-                thread.start_new_thread(self._worker, ())
+                _thread.start_new_thread(self._worker, ())
 
             # Hand off the job.
             if self._idleCount or allowQueuing:

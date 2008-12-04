@@ -32,7 +32,7 @@ import logging
 import socket
 import select
 import errno
-import cStringIO as StringIO
+import io as StringIO
 import signal
 import datetime
 import os
@@ -40,7 +40,7 @@ import warnings
 
 # Threads are required. If you want a non-threaded (forking) version, look at
 # SWAP <http://www.idyll.org/~t/www-tools/wsgi/>.
-import thread
+import _thread
 import threading
 
 __all__ = ['BaseSCGIServer']
@@ -76,7 +76,7 @@ def recvall(sock, length):
     while length:
         try:
             data = sock.recv(length)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.EAGAIN:
                 select.select([sock], [], [])
                 continue
@@ -99,7 +99,7 @@ def readNetstring(sock):
     while True:
         try:
             c = sock.recv(1)
-        except socket.error, e:
+        except socket.error as e:
             if e[0] == errno.EAGAIN:
                 select.select([sock], [], [])
                 continue
@@ -117,7 +117,7 @@ def readNetstring(sock):
         if size < 0:
             raise ValueError
     except ValueError:
-        raise ProtocolError, 'invalid netstring length'
+        raise ProtocolError('invalid netstring length')
 
     # Now read the string.
     s, length = recvall(sock, size)
@@ -132,7 +132,7 @@ def readNetstring(sock):
         raise EOFError
 
     if trailer != ',':
-        raise ProtocolError, 'invalid netstring trailer'
+        raise ProtocolError('invalid netstring trailer')
 
     return s
 
@@ -219,7 +219,7 @@ class Connection(object):
             self.processInput()
         except (EOFError, KeyboardInterrupt):
             pass
-        except ProtocolError, e:
+        except ProtocolError as e:
             self.logger.error("Protocol error '%s'", str(e))
         except:
             self.logger.exception('Exception caught in Connection')
@@ -236,20 +236,20 @@ class Connection(object):
         headers = readNetstring(self._sock)
         headers = headers.split('\x00')[:-1]
         if len(headers) % 2 != 0:
-            raise ProtocolError, 'invalid headers'
+            raise ProtocolError('invalid headers')
         environ = {}
         for i in range(len(headers) / 2):
             environ[headers[2*i]] = headers[2*i+1]
 
         clen = environ.get('CONTENT_LENGTH')
         if clen is None:
-            raise ProtocolError, 'missing CONTENT_LENGTH'
+            raise ProtocolError('missing CONTENT_LENGTH')
         try:
             clen = int(clen)
             if clen < 0:
                 raise ValueError
         except ValueError:
-            raise ProtocolError, 'invalid CONTENT_LENGTH'
+            raise ProtocolError('invalid CONTENT_LENGTH')
 
         self._sock.setblocking(1)
         if clen:
@@ -327,7 +327,7 @@ class BaseSCGIServer(object):
         self._allowedServers = allowedServers
 
         # Used to force single-threadedness.
-        self._appLock = thread.allocate_lock()
+        self._appLock = _thread.allocate_lock()
 
         self.logger = logging.getLogger(LoggerName)
         self.logger.setLevel(loggingLevel)
@@ -430,7 +430,7 @@ class BaseSCGIServer(object):
                 try:
                     if headers_sent:
                         # Re-raise if too late
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
                 finally:
                     exc_info = None # avoid dangling circular ref
             else:
@@ -463,7 +463,7 @@ class BaseSCGIServer(object):
                 finally:
                     if hasattr(result, 'close'):
                         result.close()
-            except socket.error, e:
+            except socket.error as e:
                 if e[0] != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
@@ -473,11 +473,11 @@ class BaseSCGIServer(object):
     def _sanitizeEnv(self, environ):
         """Fill-in/deduce missing values in environ."""
         reqUri = None
-        if environ.has_key('REQUEST_URI'):
+        if 'REQUEST_URI' in environ:
             reqUri = environ['REQUEST_URI'].split('?', 1)
 
         # Ensure QUERY_STRING exists
-        if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
+        if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
             if reqUri is not None and len(reqUri) > 1:
                 environ['QUERY_STRING'] = reqUri[1]
             else:
@@ -500,9 +500,9 @@ class BaseSCGIServer(object):
 
         if scriptName is NoDefault:
             # Pull SCRIPT_NAME/PATH_INFO from environment, with empty defaults
-            if not environ.has_key('SCRIPT_NAME'):
+            if 'SCRIPT_NAME' not in environ:
                 environ['SCRIPT_INFO'] = ''
-            if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
+            if 'PATH_INFO' not in environ or not environ['PATH_INFO']:
                 if reqUri is not None:
                     environ['PATH_INFO'] = reqUri[0]
                 else:

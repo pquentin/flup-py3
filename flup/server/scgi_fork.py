@@ -66,8 +66,8 @@ __version__ = '$Revision$'
 import logging
 import socket
 
-from flup.server.scgi_base import BaseSCGIServer, Connection, NoDefault
-from flup.server.preforkserver import PreforkServer
+from .scgi_base import BaseSCGIServer, Connection, NoDefault
+from .preforkserver import PreforkServer
 
 __all__ = ['WSGIServer']
 
@@ -128,7 +128,7 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
                                 loggingLevel=loggingLevel,
                                 debug=debug)
         for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):
-            if kw.has_key(key):
+            if key in kw:
                 del kw[key]
         PreforkServer.__init__(self, jobClass=Connection, jobArgs=(self,), **kw)
 
@@ -142,7 +142,7 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
 
         try:
             sock = self._setupSocket()
-        except socket.error, e:
+        except socket.error as e:
             self.logger.error('Failed to bind socket (%s), exiting', e[1])
             return False
 
@@ -156,23 +156,23 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
         return ret
 
 def factory(global_conf, host=None, port=None, **local):
-    import paste_factory
+    from . import paste_factory
     return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
 
 if __name__ == '__main__':
     def test_app(environ, start_response):
         """Probably not the most efficient example."""
-        import cgi
+        from . import cgi
         start_response('200 OK', [('Content-Type', 'text/html')])
         yield '<html><head><title>Hello World!</title></head>\n' \
               '<body>\n' \
               '<p>Hello World!</p>\n' \
               '<table border="1">'
-        names = environ.keys()
+        names = list(environ.keys())
         names.sort()
         for name in names:
             yield '<tr><td>%s</td><td>%s</td></tr>\n' % (
-                name, cgi.escape(`environ[name]`))
+                name, cgi.escape(repr(environ[name])))
 
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
                                 keep_blank_values=1)

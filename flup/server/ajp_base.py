@@ -846,7 +846,10 @@ class BaseAJPServer(object):
         result = None
 
         def write(data):
-            assert type(data) is bytes, 'write() argument must be string'
+            if type(data) is str:
+                data = data.encode('latin-1')
+
+            assert type(data) is bytes, 'write() argument must be bytes'
             assert headers_set, 'write() before start_response()'
 
             if not headers_sent:
@@ -880,17 +883,27 @@ class BaseAJPServer(object):
             else:
                 assert not headers_set, 'Headers already set!'
 
-            assert type(status) is bytes, 'Status must be a string'
-            assert len(status) >= 4, 'Status must be at least 4 characters'
+            if type(status) is str:
+                status = status.encode('latin-1')
+
+            assert type(status) is bytes, 'Status must be bytes'
+            assert len(status) >= 4, 'Status must be at least 4 bytes'
             assert int(status[:3]), 'Status must begin with 3-digit code'
             assert status[3] == 0x20, 'Status must have a space after code'
             assert type(response_headers) is list, 'Headers must be a list'
-            if __debug__:
-                for name,val in response_headers:
-                    assert type(name) is bytes, 'Header name "%s" must be a string' % name
-                    assert type(val) is bytes, 'Value of header "%s" must be a string' % name
+            new_response_headers = []
+            for name,val in response_headers:
+                if type(name) is str:
+                    name = name.encode('latin-1')
+                if type(val) is str:
+                    val = val.encode('latin-1')
 
-            headers_set[:] = [status, response_headers]
+                assert type(name) is bytes, 'Header name "%s" must be bytes' % name
+                assert type(val) is bytes, 'Value of header "%s" must be bytes' % name
+
+                new_response_headers.append((name, val))
+
+            headers_set[:] = [status, new_response_headers]
             return write
 
         if not self.multithreaded:

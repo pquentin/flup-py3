@@ -390,7 +390,7 @@ class InputStream(object):
                 self._buf += b''.join(self._bufList)
                 self._bufList = []
             # Find newline.
-            i = self._buf.find('\n', self._pos)
+            i = self._buf.find(b'\n', self._pos)
             if i < 0:
                 # Not found?
                 if not self.bytesAvailForAdd():
@@ -445,6 +445,7 @@ class InputStream(object):
         the server for data beyond the Content-Length, so the server should
         never send us an EOF (empty string argument).
         """
+        assert type(data) is bytes
         if not data:
             raise ProtocolError('short data')
         self._bufList.append(data)
@@ -508,25 +509,25 @@ class Request(object):
     # Request.
 
     def setMethod(self, value):
-        self.environ['REQUEST_METHOD'] = value
+        self.environ['REQUEST_METHOD'] = value.decode('latin-1')
 
     def setProtocol(self, value):
-        self.environ['SERVER_PROTOCOL'] = value
+        self.environ['SERVER_PROTOCOL'] = value.decode('latin-1')
 
     def setRequestURI(self, value):
-        self.environ['REQUEST_URI'] = value
+        self.environ['REQUEST_URI'] = value.decode('latin-1')
 
     def setRemoteAddr(self, value):
-        self.environ['REMOTE_ADDR'] = value
+        self.environ['REMOTE_ADDR'] = value.decode('latin-1')
 
     def setRemoteHost(self, value):
-        self.environ['REMOTE_HOST'] = value
+        self.environ['REMOTE_HOST'] = value.decode('latin-1')
 
     def setServerName(self, value):
-        self.environ['SERVER_NAME'] = value
+        self.environ['SERVER_NAME'] = value.decode('latin-1')
 
     def setServerPort(self, value):
-        self.environ['SERVER_PORT'] = str(value).encode('latin-1')
+        self.environ['SERVER_PORT'] = str(value)
 
     def setIsSSL(self, value):
         if value:
@@ -535,15 +536,15 @@ class Request(object):
     def addHeader(self, name, value):
         name = name.replace(b'-', b'_').upper()
         if name in (b'CONTENT_TYPE', b'CONTENT_LENGTH'):
-            self.environ[name.decode('latin-1')] = value
+            self.environ[name.decode('latin-1')] = value.decode('latin-1')
             if name == b'CONTENT_LENGTH':
                 length = int(value)
                 self.input.setDataLength(length)
         else:
-            self.environ[(b'HTTP_'+name).decode('latin-1')] = value
+            self.environ[(b'HTTP_'+name).decode('latin-1')] = value.decode('latin-1')
 
     def addAttribute(self, name, value):
-        self.environ[name] = value
+        self.environ[name.decode('latin-1')] = value.decode('latin-1')
 
     # The only two methods that should be called from the handler.
 
@@ -749,7 +750,7 @@ class BaseAJPServer(object):
     # it is the maximum size of new data added per chunk.)
     inputStreamShrinkThreshold = 102400 - 8192
 
-    def __init__(self, application, scriptName=b'', environ=None,
+    def __init__(self, application, scriptName='', environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 8009), allowedServers=NoDefault,
                  loggingLevel=logging.INFO, debug=True):
@@ -834,9 +835,9 @@ class BaseAJPServer(object):
         environ['wsgi.run_once'] = False
 
         if environ.get('HTTPS', 'off') in ('on', '1'):
-            environ['wsgi.url_scheme'] = b'https'
+            environ['wsgi.url_scheme'] = 'https'
         else:
-            environ['wsgi.url_scheme'] = b'http'
+            environ['wsgi.url_scheme'] = 'http'
 
         self._sanitizeEnv(environ)
 
@@ -926,13 +927,13 @@ class BaseAJPServer(object):
 
         reqUri = None
         if 'REQUEST_URI' in environ:
-            reqUri = environ['REQUEST_URI'].split(b'?', 1)
+            reqUri = environ['REQUEST_URI'].split('?', 1)
 
         if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
             if reqUri is not None and len(reqUri) > 1:
                 environ['QUERY_STRING'] = reqUri[1]
             else:
-                environ['QUERY_STRING'] = b''
+                environ['QUERY_STRING'] = ''
 
     def error(self, request):
         """

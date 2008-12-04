@@ -100,7 +100,7 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
     Of course you will need an AJP1.3 connector for your webserver (e.g.
     mod_jk) - see <http://jakarta.apache.org/tomcat/connectors-doc/>.
     """
-    def __init__(self, application, scriptName='', environ=None,
+    def __init__(self, application, scriptName=b'', environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 8009), allowedServers=None,
                  loggingLevel=logging.INFO, debug=True, **kw):

@@ -88,14 +88,14 @@ def recvall(sock, length):
         dataLen = len(data)
         recvLen += dataLen
         length -= dataLen
-    return ''.join(dataList), recvLen
+    return b''.join(dataList), recvLen
 
 def readNetstring(sock):
     """
     Attempt to read a netstring from a socket.
     """
     # First attempt to read the length.
-    size = ''
+    size = b''
     while True:
         try:
             c = sock.recv(1)
@@ -105,7 +105,7 @@ def readNetstring(sock):
                 continue
             else:
                 raise
-        if c == ':':
+        if c == b':':
             break
         if not c:
             raise EOFError
@@ -131,7 +131,7 @@ def readNetstring(sock):
     if length < 1:
         raise EOFError
 
-    if trailer != ',':
+    if trailer != b',':
         raise ProtocolError('invalid netstring trailer')
 
     return s
@@ -234,12 +234,12 @@ class Connection(object):
     def processInput(self):
         # Read headers
         headers = readNetstring(self._sock)
-        headers = headers.split('\x00')[:-1]
+        headers = headers.split(b'\x00')[:-1]
         if len(headers) % 2 != 0:
             raise ProtocolError('invalid headers')
         environ = {}
-        for i in range(len(headers) / 2):
-            environ[headers[2*i]] = headers[2*i+1]
+        for i in range(len(headers) // 2):
+            environ[headers[2*i].decode('latin-1')] = headers[2*i+1].decode('latin-1')
 
         clen = environ.get('CONTENT_LENGTH')
         if clen is None:
@@ -253,13 +253,13 @@ class Connection(object):
 
         self._sock.setblocking(1)
         if clen:
-            input = self._sock.makefile('r')
+            input = self._sock.makefile('rb')
         else:
             # Empty input.
             input = StringIO.StringIO()
 
         # stdout
-        output = self._sock.makefile('w')
+        output = self._sock.makefile('wb')
 
         # Allocate Request
         req = Request(self, environ, input, output)
@@ -399,27 +399,30 @@ class BaseSCGIServer(object):
         result = None
 
         def write(data):
-            assert type(data) is str, 'write() argument must be string'
+            if type(data) is str:
+                data = data.encode('latin-1')
+
+            assert type(data) is bytes, 'write() argument must be bytes'
             assert headers_set, 'write() before start_response()'
 
             if not headers_sent:
                 status, responseHeaders = headers_sent[:] = headers_set
                 found = False
                 for header,value in responseHeaders:
-                    if header.lower() == 'content-length':
+                    if header.lower() == b'content-length':
                         found = True
                         break
                 if not found and result is not None:
                     try:
                         if len(result) == 1:
-                            responseHeaders.append(('Content-Length',
-                                                    str(len(data))))
+                            responseHeaders.append((b'Content-Length',
+                                                    str(len(data)).encode('latin-1')))
                     except:
                         pass
-                s = 'Status: %s\r\n' % status
-                for header in responseHeaders:
-                    s += '%s: %s\r\n' % header
-                s += '\r\n'
+                s = b'Status: ' + status + b'\r\n'
+                for header,value in responseHeaders:
+                    s += header + b': ' + value + b'\r\n'
+                s += b'\r\n'
                 request.stdout.write(s)
 
             request.stdout.write(data)
@@ -436,17 +439,27 @@ class BaseSCGIServer(object):
             else:
                 assert not headers_set, 'Headers already set!'
 
-            assert type(status) is str, 'Status must be a string'
+            if type(status) is str:
+                status = status.encode('latin-1')
+
+            assert type(status) is bytes, 'Status must be a bytes'
             assert len(status) >= 4, 'Status must be at least 4 characters'
             assert int(status[:3]), 'Status must begin with 3-digit code'
-            assert status[3] == ' ', 'Status must have a space after code'
+            assert status[3] == 0x20, 'Status must have a space after code'
             assert type(response_headers) is list, 'Headers must be a list'
-            if __debug__:
-                for name,val in response_headers:
-                    assert type(name) is str, 'Header name "%s" must be a string' % name
-                    assert type(val) is str, 'Value of header "%s" must be a string' % name
+            new_response_headers = []
+            for name,val in response_headers:
+                if type(name) is str:
+                    name = name.encode('latin-1')
+                if type(val) is str:
+                    val = val.encode('latin-1')
 
-            headers_set[:] = [status, response_headers]
+                assert type(name) is bytes, 'Header name "%s" must be bytes' % name
+                assert type(val) is bytes, 'Value of header "%s" must be bytes' % name
+
+                new_response_headers.append((name, val))
+
+            headers_set[:] = [status, new_response_headers]
             return write
 
         if not self.multithreaded:
@@ -459,7 +472,7 @@ class BaseSCGIServer(object):
                         if data:
                             write(data)
                     if not headers_sent:
-                        write('') # in case body was empty
+                        write(b'') # in case body was empty
                 finally:
                     if hasattr(result, 'close'):
                         result.close()
@@ -529,10 +542,10 @@ class BaseSCGIServer(object):
         """
         if self.debug:
             import cgitb
-            request.stdout.write('Content-Type: text/html\r\n\r\n' +
-                                 cgitb.html(sys.exc_info()))
+            request.stdout.write(b'Content-Type: text/html\r\n\r\n' +
+                                 cgitb.html(sys.exc_info()).encode('latin-1'))
         else:
-            errorpage = """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+            errorpage = b"""<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>Unhandled Exception</title>
 </head><body>
@@ -540,5 +553,5 @@ class BaseSCGIServer(object):
 <p>An unhandled exception was thrown by the application.</p>
 </body></html>
 """
-            request.stdout.write('Content-Type: text/html\r\n\r\n' +
+            request.stdout.write(b'Content-Type: text/html\r\n\r\n' +
                                  errorpage)

@@ -77,7 +77,7 @@ def recvall(sock, length):
         try:
             data = sock.recv(length)
         except socket.error as e:
-            if e[0] == errno.EAGAIN:
+            if e.errno == errno.EAGAIN:
                 select.select([sock], [], [])
                 continue
             else:
@@ -100,7 +100,7 @@ def readNetstring(sock):
         try:
             c = sock.recv(1)
         except socket.error as e:
-            if e[0] == errno.EAGAIN:
+            if e.errno == errno.EAGAIN:
                 select.select([sock], [], [])
                 continue
             else:
@@ -477,7 +477,7 @@ class BaseSCGIServer(object):
                     if hasattr(result, 'close'):
                         result.close()
             except socket.error as e:
-                if e[0] != errno.EPIPE:
+                if e.errno != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
             if not self.multithreaded:

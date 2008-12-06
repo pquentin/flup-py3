@@ -250,7 +250,7 @@ class Packet(object):
             try:
                 data = sock.recv(length)
             except socket.error as e:
-                if e[0] == errno.EAGAIN:
+                if e.errno == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
                 else:
@@ -297,7 +297,7 @@ class Packet(object):
             try:
                 sent = sock.send(data)
             except socket.error as e:
-                if e[0] == errno.EAGAIN:
+                if e.errno == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
                 else:
@@ -921,7 +921,7 @@ class BaseAJPServer(object):
                     if hasattr(result, 'close'):
                         result.close()
             except socket.error as e:
-                if e[0] != errno.EPIPE:
+                if e.errno != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
             if not self.multithreaded:

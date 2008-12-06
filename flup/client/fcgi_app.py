@@ -105,14 +105,14 @@ def decode_pair(s, pos=0):
     The number of bytes decoded as well as the name/value pair
     are returned.
     """
-    nameLength = ord(s[pos])
+    nameLength = s[pos]
     if nameLength & 128:
         nameLength = struct.unpack('!L', s[pos:pos+4])[0] & 0x7fffffff
         pos += 4
     else:
         pos += 1
 
-    valueLength = ord(s[pos])
+    valueLength = s[pos]
     if valueLength & 128:
         valueLength = struct.unpack('!L', s[pos:pos+4])[0] & 0x7fffffff
         pos += 4
@@ -134,13 +134,13 @@ def encode_pair(name, value):
     """
     nameLength = len(name)
     if nameLength < 128:
-        s = chr(nameLength)
+        s = bytes([nameLength])
     else:
         s = struct.pack('!L', nameLength | 0x80000000)
 
     valueLength = len(value)
     if valueLength < 128:
-        s += chr(valueLength)
+        s += bytes([valueLength])
     else:
         s += struct.pack('!L', valueLength | 0x80000000)
 
@@ -158,7 +158,7 @@ class Record(object):
         self.requestId = requestId
         self.contentLength = 0
         self.paddingLength = 0
-        self.contentData = ''
+        self.contentData = b''
 
     def _recvall(sock, length):
         """
@@ -171,7 +171,7 @@ class Record(object):
             try:
                 data = sock.recv(length)
             except socket.error as e:
-                if e[0] == errno.EAGAIN:
+                if e.errno == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
                 else:
@@ -182,7 +182,7 @@ class Record(object):
             dataLen = len(data)
             recvLen += dataLen
             length -= dataLen
-        return ''.join(dataList), recvLen
+        return b''.join(dataList), recvLen
     _recvall = staticmethod(_recvall)
 
     def read(self, sock):
@@ -228,7 +228,7 @@ class Record(object):
             try:
                 sent = sock.send(data)
             except socket.error as e:
-                if e[0] == errno.EAGAIN:
+                if e.errno == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
                 else:
@@ -253,7 +253,7 @@ class Record(object):
         if self.contentLength:
             self._sendall(sock, self.contentData)
         if self.paddingLength:
-            self._sendall(sock, '\x00'*self.paddingLength)
+            self._sendall(sock, b'\x00'*self.paddingLength)
 
 class FCGIApp(object):
     def __init__(self, command=None, connect=None, host=None, port=None,
@@ -333,7 +333,7 @@ class FCGIApp(object):
                     pass
             elif inrec.type == FCGI_STDERR:
                 # Simply forward to wsgi.errors
-                environ['wsgi.errors'].write(inrec.contentData)
+                environ['wsgi.errors'].write(inrec.contentData.decode(sys.getdefaultencoding()))
             elif inrec.type == FCGI_END_REQUEST:
                 # TODO: Process appStatus/protocolStatus fields?
                 break
@@ -343,14 +343,14 @@ class FCGIApp(object):
         # application is expected to do the same.)
         sock.close()
 
-        result = ''.join(result)
+        result = b''.join(result)
 
         # Parse response headers from FCGI_STDOUT
-        status = '200 OK'
+        status = b'200 OK'
         headers = []
         pos = 0
         while True:
-            eolpos = result.find('\n', pos)
+            eolpos = result.find(b'\n', pos)
             if eolpos < 0: break
             line = result[pos:eolpos-1]
             pos = eolpos + 1
@@ -363,16 +363,16 @@ class FCGIApp(object):
             if not line: break
 
             # TODO: Better error handling
-            header, value = line.split(':', 1)
+            header, value = line.split(b':', 1)
             header = header.strip().lower()
             value = value.strip()
 
-            if header == 'status':
+            if header == b'status':
                 # Special handling of Status header
                 status = value
-                if status.find(' ') < 0:
+                if status.find(b' ') < 0:
                     # Append a dummy reason phrase if one was not provided
-                    status += ' FCGIApp'
+                    status += b' FCGIApp'
             else:
                 headers.append((header, value))
 
@@ -401,8 +401,8 @@ class FCGIApp(object):
         outrec = Record(FCGI_GET_VALUES)
         data = []
         for name in vars:
-            data.append(encode_pair(name, ''))
-        data = ''.join(data)
+            data.append(encode_pair(name, b''))
+        data = b''.join(data)
         outrec.contentData = data
         outrec.contentLength = len(data)
         outrec.write(sock)
@@ -422,8 +422,8 @@ class FCGIApp(object):
         rec = Record(FCGI_PARAMS, requestId)
         data = []
         for name,value in list(params.items()):
-            data.append(encode_pair(name, value))
-        data = ''.join(data)
+            data.append(encode_pair(name.encode('latin-1'), value.encode('latin-1')))
+        data = b''.join(data)
         rec.contentData = data
         rec.contentLength = len(data)
         rec.write(sock)

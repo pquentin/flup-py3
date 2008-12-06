@@ -101,7 +101,7 @@ if __debug__:
     import time
 
     # Set non-zero to write debug output to a file.
-    DEBUG = 10
+    DEBUG = 0
     DEBUGLOG = '/tmp/fcgi.log'
 
     def _debug(level, msg):

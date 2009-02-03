@@ -1,5 +1,8 @@
 2009-02-02  Allan Saddi  <allan@saddi.com>
 
+	* Add forceCGI keyword argument to FastCGI servers to
+	  programmatically force CGI behavior.
+
 	* Merge Tommi Virtanen's "single server" (sequential server)
 	  patch.
 

@@ -902,7 +902,8 @@ class BaseFCGIServer(object):
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=None, umask=None, multiplexed=False,
-                 debug=True, roles=(FCGI_RESPONDER,)):
+                 debug=True, roles=(FCGI_RESPONDER,),
+                 forceCGI=False):
         """
         bindAddress, if present, must either be a string or a 2-tuple. If
         present, run() will open its own listening socket. You would use
@@ -934,6 +935,7 @@ class BaseFCGIServer(object):
         self.multiprocess = multiprocess
         self.debug = debug
         self.roles = roles
+        self.forceCGI = forceCGI
 
         self._bindAddress = bindAddress
         self._umask = umask
@@ -989,7 +991,7 @@ class BaseFCGIServer(object):
             # if you want to run your app as a simple CGI. (You can do
             # this with Apache's mod_env [not loaded by default in OS X
             # client, ha ha] and the SetEnv directive.)
-            if not isFCGI or \
+            if not isFCGI or self.forceCGI or \
                os.environ.get('FCGI_FORCE_CGI', 'N').upper().startswith('Y'):
                 req = self.cgirequest_class(self)
                 req.run()

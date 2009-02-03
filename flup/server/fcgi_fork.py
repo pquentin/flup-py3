@@ -51,7 +51,7 @@ __version__ = '$Revision$'
 
 import os
 
-from flup.server.fcgi_base import BaseFCGIServer, \
+from flup.server.fcgi_base import BaseFCGIServer, FCGI_RESPONDER, \
      FCGI_MAX_CONNS, FCGI_MAX_REQS, FCGI_MPXS_CONNS
 from flup.server.preforkserver import PreforkServer
 
@@ -64,7 +64,7 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
     """
     def __init__(self, application, environ=None,
                  bindAddress=None, umask=None, multiplexed=False,
-                 debug=True, **kw):
+                 debug=True, roles=(FCGI_RESPONDER,), forceCGI=False, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
         contents will be copied into application's environ. Useful
@@ -86,7 +86,9 @@ class WSGIServer(BaseFCGIServer, PreforkServer):
                                 bindAddress=bindAddress,
                                 umask=umask,
                                 multiplexed=multiplexed,
-                                debug=debug)
+                                debug=debug,
+                                roles=roles,
+                                forceCGI=forceCGI)
         for key in ('multithreaded', 'multiprocess', 'jobClass', 'jobArgs'):
             if kw.has_key(key):
                 del kw[key]

@@ -309,6 +309,21 @@ class PreforkServer(object):
         """Override to provide access control."""
         return True
 
+    def _notifyParent(self, parent, msg):
+        """Send message to parent, ignoring EPIPE and retrying on EAGAIN"""
+        while True:
+            try:
+                parent.send(msg)
+                return True
+            except socket.error, e:
+                if e[0] == errno.EPIPE:
+                    return False # Parent is gone
+                if e[0] == errno.EAGAIN:
+                    # Wait for socket change before sending again
+                    select.select([], [parent], [])
+                else:
+                    raise
+                
     def _child(self, sock, parent):
         """Main loop for children."""
         requestCount = 0
@@ -353,12 +368,7 @@ class PreforkServer(object):
                 continue
 
             # Notify parent we're no longer available.
-            try:
-                parent.send('\x00')
-            except socket.error, e:
-                # If parent is gone, finish up this request.
-                if e[0] != errno.EPIPE:
-                    raise
+            self._notifyParent(parent, '\x00')
 
             # Do the job.
             self._jobClass(clientSock, addr, *self._jobArgs).run()
@@ -370,13 +380,8 @@ class PreforkServer(object):
                     break
                 
             # Tell parent we're free again.
-            try:
-                parent.send('\xff')
-            except socket.error, e:
-                if e[0] == errno.EPIPE:
-                    # Parent is gone.
-                    return
-                raise
+            if not self._notifyParent(parent, '\xff'):
+                return # Parent is gone.
 
     # Signal handlers
 

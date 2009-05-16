@@ -51,18 +51,18 @@ __version__ = '$Revision$'
 
 import os
 
-from .fcgi_base import BaseFCGIServer, FCGI_RESPONDER
-from .threadedserver import ThreadedServer
+from .fcgi_base import BaseFCGIServer, FCGI_RESPONDER, \
+     FCGI_MAX_CONNS, FCGI_MAX_REQS, FCGI_MPXS_CONNS
+from .singleserver import SingleServer
 
 __all__ = ['WSGIServer']
 
-class WSGIServer(BaseFCGIServer, ThreadedServer):
+class WSGIServer(BaseFCGIServer, SingleServer):
     """
     FastCGI server that supports the Web Server Gateway Interface. See
     <http://www.python.org/peps/pep-0333.html>.
     """
     def __init__(self, application, environ=None,
-                 multithreaded=True, multiprocess=False,
                  bindAddress=None, umask=None, multiplexed=False,
                  debug=True, roles=(FCGI_RESPONDER,), forceCGI=False, **kw):
         """
@@ -81,8 +81,8 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         """
         BaseFCGIServer.__init__(self, application,
                                 environ=environ,
-                                multithreaded=multithreaded,
-                                multiprocess=multiprocess,
+                                multithreaded=False,
+                                multiprocess=False,
                                 bindAddress=bindAddress,
                                 umask=umask,
                                 multiplexed=multiplexed,
@@ -92,8 +92,13 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         for key in ('jobClass', 'jobArgs'):
             if key in kw:
                 del kw[key]
-        ThreadedServer.__init__(self, jobClass=self._connectionClass,
-                                jobArgs=(self,), **kw)
+        SingleServer.__init__(self, jobClass=self._connectionClass,
+                              jobArgs=(self,), **kw)
+        self.capability = {
+            FCGI_MAX_CONNS: 1,
+            FCGI_MAX_REQS: 1,
+            FCGI_MPXS_CONNS: 0
+            }
 
     def _isClientAllowed(self, addr):
         return self._web_server_addrs is None or \
@@ -110,7 +115,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
 
         sock = self._setupSocket()
 
-        ret = ThreadedServer.run(self, sock)
+        ret = SingleServer.run(self, sock)
 
         self._cleanupSocket(sock)
 
@@ -123,7 +128,7 @@ def factory(global_conf, host=None, port=None, **local):
 if __name__ == '__main__':
     def test_app(environ, start_response):
         """Probably not the most efficient example."""
-        import cgi
+        from . import cgi
         start_response('200 OK', [('Content-Type', 'text/html')])
         yield '<html><head><title>Hello World!</title></head>\n' \
               '<body>\n' \

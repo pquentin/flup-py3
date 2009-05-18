@@ -162,10 +162,6 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
 
         return ret
 
-def factory(global_conf, host=None, port=None, **local):
-    import paste_factory
-    return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
-
 if __name__ == '__main__':
     def test_app(environ, start_response):
         """Probably not the most efficient example."""

@@ -1,3 +1,11 @@
+2009-05-18  Allan Saddi  <allan@saddi.com>
+
+	* Import Paste factories (and dependencies...) from PasteScript
+
+2009-05-04  Allan Saddi  <allan@saddi.com>
+
+	* Be tolerant of EAGAIN when sending messages to parent process.
+
 2009-02-02  Allan Saddi  <allan@saddi.com>
 
 	* Add forceCGI keyword argument to FastCGI servers to

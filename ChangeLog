@@ -1,3 +1,8 @@
+2009-05-29  Allan Saddi  <allan@saddi.com>
+
+	* Let all the active requests to finish before quitting. Thanks
+	  to Anand Chitipothu for the patch!
+
 2009-05-26  Allan Saddi  <allan@saddi.com>
 
 	* Release 1.0.2

@@ -151,6 +151,7 @@ class WSGIServer(BaseSCGIServer, ThreadedServer):
         ret = ThreadedServer.run(self, sock)
 
         self._cleanupSocket(sock)
+        self.shutdown()
 
         self.logger.info('%s shutting down%s', self.__class__.__name__,
                          self._hupReceived and ' (reload requested)' or '')

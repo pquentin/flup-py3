@@ -114,6 +114,7 @@ class WSGIServer(BaseFCGIServer, ThreadedServer):
         ret = ThreadedServer.run(self, sock)
 
         self._cleanupSocket(sock)
+        self.shutdown()
 
         return ret
 

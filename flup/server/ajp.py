@@ -156,15 +156,15 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
         ret = ThreadedServer.run(self, sock)
 
         self._cleanupSocket(sock)
+        # AJP connections are more or less persistent. .shutdown() will
+        # not return until the web server lets go. So don't bother calling
+        # it...
+        #self.shutdown()
 
         self.logger.info('%s shutting down%s', self.__class__.__name__,
                          self._hupReceived and ' (reload requested)' or '')
 
         return ret
-
-def factory(global_conf, host=None, port=None, **local):
-    from . import paste_factory
-    return paste_factory.helper(WSGIServer, global_conf, host, port, **local)
 
 if __name__ == '__main__':
     def test_app(environ, start_response):

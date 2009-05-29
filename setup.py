@@ -5,21 +5,21 @@ use_setuptools()
 from setuptools import setup, find_packages
 setup(
     name = 'flup',
-    version = '1.0.1',
+    version = '1.0.2',
     packages = find_packages(),
     zip_safe = True,
     
     entry_points = """
-    [paste.server_factory]
-    ajp = flup.server.ajp:factory
-    fcgi = flup.server.fcgi:factory
-    scgi = flup.server.scgi:factory
-    ajp_thread = flup.server.ajp:factory
-    fcgi_thread = flup.server.fcgi:factory
-    scgi_thread = flup.server.scgi:factory
-    ajp_fork = flup.server.ajp_fork:factory
-    fcgi_fork = flup.server.fcgi_fork:factory
-    scgi_fork = flup.server.scgi_fork:factory
+    [paste.server_runner]
+    ajp = flup.server.paste_factory:run_ajp_thread
+    fcgi = flup.server.paste_factory:run_fcgi_thread
+    scgi = flup.server.paste_factory:run_scgi_thread
+    ajp_thread = flup.server.paste_factory:run_ajp_thread
+    fcgi_thread = flup.server.paste_factory:run_fcgi_thread
+    scgi_thread = flup.server.paste_factory:run_scgi_thread
+    ajp_fork = flup.server.paste_factory:run_ajp_fork
+    fcgi_fork = flup.server.paste_factory:run_fcgi_fork
+    scgi_fork = flup.server.paste_factory:run_scgi_fork
     """,
     
     author = 'Allan Saddi',

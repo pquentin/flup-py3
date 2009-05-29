@@ -56,6 +56,7 @@ class ThreadPool(object):
     def _start_new_thread(self):
         t = threading.Thread(target=self._worker)
         self._threads.append(t)
+        t.daemon = True
         t.start()
         return t
         

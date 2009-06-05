@@ -501,7 +501,7 @@ class BaseSCGIServer(object):
         if scriptName is NoDefault:
             # Pull SCRIPT_NAME/PATH_INFO from environment, with empty defaults
             if not environ.has_key('SCRIPT_NAME'):
-                environ['SCRIPT_INFO'] = ''
+                environ['SCRIPT_NAME'] = ''
             if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
                 if reqUri is not None:
                     environ['PATH_INFO'] = reqUri[0]

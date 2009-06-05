@@ -1,3 +1,8 @@
+2009-06-05  Allan Saddi  <allan@saddi.com>
+
+	* Fix bug in scgi servers that occurs when SCRIPT_NAME is missing.
+	  Thanks to Jon Nelson for finding the problem!
+
 2009-05-29  Allan Saddi  <allan@saddi.com>
 
 	* Let all the active requests to finish before quitting. Thanks

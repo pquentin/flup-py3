@@ -29,7 +29,7 @@ def aslist(obj, sep=None, strip=True):
         return [obj]
 
 def run_ajp_thread(wsgi_app, global_conf,
-                   scriptName=NoDefault, host='localhost', port='8009',
+                   scriptName='', host='localhost', port='8009',
                    allowedServers='127.0.0.1', debug=NoDefault):
     import flup.server.ajp
     addr = (host, int(port))

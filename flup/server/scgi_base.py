@@ -45,8 +45,7 @@ import threading
 
 __all__ = ['BaseSCGIServer']
 
-class NoDefault(object):
-    pass
+from flup.server import NoDefault
 
 # The main classes use this name for logging.
 LoggerName = 'scgi-wsgi'
@@ -278,7 +277,7 @@ class BaseSCGIServer(object):
                  multithreaded=True, multiprocess=False,
                  bindAddress=('localhost', 4000), umask=None,
                  allowedServers=NoDefault,
-                 loggingLevel=logging.INFO, debug=True):
+                 loggingLevel=logging.INFO, debug=False):
         """
         scriptName is the initial portion of the URL path that "belongs"
         to your application. It is used to determine PATH_INFO (which doesn't

@@ -902,7 +902,7 @@ class BaseFCGIServer(object):
     def __init__(self, application, environ=None,
                  multithreaded=True, multiprocess=False,
                  bindAddress=None, umask=None, multiplexed=False,
-                 debug=True, roles=(FCGI_RESPONDER,),
+                 debug=False, roles=(FCGI_RESPONDER,),
                  forceCGI=False):
         """
         bindAddress, if present, must either be a string or a 2-tuple. If

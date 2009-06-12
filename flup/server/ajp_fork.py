@@ -102,7 +102,7 @@ class WSGIServer(BaseAJPServer, PreforkServer):
     """
     def __init__(self, application, scriptName='', environ=None,
                  bindAddress=('localhost', 8009), allowedServers=None,
-                 loggingLevel=logging.INFO, debug=True, **kw):
+                 loggingLevel=logging.INFO, debug=False, **kw):
         """
         scriptName is the initial portion of the URL path that "belongs"
         to your application. It is used to determine PATH_INFO (which doesn't

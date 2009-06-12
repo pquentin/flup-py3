@@ -64,7 +64,7 @@ class WSGIServer(BaseFCGIServer, SingleServer):
     """
     def __init__(self, application, environ=None,
                  bindAddress=None, umask=None, multiplexed=False,
-                 debug=True, roles=(FCGI_RESPONDER,), forceCGI=False, **kw):
+                 debug=False, roles=(FCGI_RESPONDER,), forceCGI=False, **kw):
         """
         environ, if present, must be a dictionary-like object. Its
         contents will be copied into application's environ. Useful

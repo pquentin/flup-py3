@@ -66,7 +66,8 @@ __version__ = '$Revision$'
 import logging
 import socket
 
-from flup.server.scgi_base import BaseSCGIServer, Connection, NoDefault
+from flup.server import NoDefault
+from flup.server.scgi_base import BaseSCGIServer, Connection
 from flup.server.preforkserver import PreforkServer
 
 __all__ = ['WSGIServer']
@@ -90,7 +91,7 @@ class WSGIServer(BaseSCGIServer, PreforkServer):
     def __init__(self, application, scriptName=NoDefault, environ=None,
                  bindAddress=('localhost', 4000), umask=None,
                  allowedServers=None,
-                 loggingLevel=logging.INFO, debug=True, **kw):
+                 loggingLevel=logging.INFO, debug=False, **kw):
         """
         scriptName is the initial portion of the URL path that "belongs"
         to your application. It is used to determine PATH_INFO (which doesn't

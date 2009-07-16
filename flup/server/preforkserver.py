@@ -99,6 +99,9 @@ class PreforkServer(object):
         # free to process requests.
         self._children = {}
 
+        self._children_to_purge = []
+        self._last_purge = 0
+
     def run(self, sock):
         """
         The main loop. Pass a socket that is ready to accept() client
@@ -126,15 +129,17 @@ class PreforkServer(object):
             r = [x['file'] for x in self._children.values()
                  if x['file'] is not None]
 
-            if len(r) == len(self._children):
+            if len(r) == len(self._children) and not self._children_to_purge:
                 timeout = None
             else:
                 # There are dead children that need to be reaped, ensure
-                # that they are by timing out, if necessary.
+                # that they are by timing out, if necessary. Or there are some
+                # children that need to die.
                 timeout = 2
 
+            w = (time.time() > self._last_purge + 10) and self._children_to_purge or []
             try:
-                r, w, e = select.select(r, [], [], timeout)
+                r, w, e = select.select(r, w, [], timeout)
             except select.error, e:
                 if e[0] != errno.EINTR:
                     raise
@@ -162,6 +167,20 @@ class PreforkServer(object):
                             d['file'].close()
                             d['file'] = None
                             d['avail'] = False
+
+            for child in w:
+                # purging child
+                child.send('bye, bye')
+                del self._children_to_purge[self._children_to_purge.index(child)]
+                self._last_purge = time.time()
+
+                # Try to match it with a child. (Do we need a reverse map?)
+                for pid,d in self._children.items():
+                    if child is d['file']:
+                        d['file'].close()
+                        d['file'] = None
+                        d['avail'] = False
+                break
 
             # Reap children.
             self._reapChildren()
@@ -396,8 +415,12 @@ class PreforkServer(object):
         # Do nothing (breaks us out of select and allows us to reap children).
         pass
 
+    def _usr1Handler(self, signum, frame):
+        self._children_to_purge = [x['file'] for x in self._children.values()
+                                   if x['file'] is not None]
+
     def _installSignalHandlers(self):
-        supportedSignals = [signal.SIGINT, signal.SIGTERM]
+        supportedSignals = [signal.SIGINT, signal.SIGTERM, signal.SIGUSR1]
         if hasattr(signal, 'SIGHUP'):
             supportedSignals.append(signal.SIGHUP)
 
@@ -406,6 +429,8 @@ class PreforkServer(object):
         for sig in supportedSignals:
             if hasattr(signal, 'SIGHUP') and sig == signal.SIGHUP:
                 signal.signal(sig, self._hupHandler)
+            elif sig == signal.SIGUSR1:
+                signal.signal(sig, self._usr1Handler)
             else:
                 signal.signal(sig, self._intHandler)
 

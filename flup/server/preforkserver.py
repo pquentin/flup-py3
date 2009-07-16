@@ -420,16 +420,18 @@ class PreforkServer(object):
                                    if x['file'] is not None]
 
     def _installSignalHandlers(self):
-        supportedSignals = [signal.SIGINT, signal.SIGTERM, signal.SIGUSR1]
+        supportedSignals = [signal.SIGINT, signal.SIGTERM]
         if hasattr(signal, 'SIGHUP'):
             supportedSignals.append(signal.SIGHUP)
+        if hasattr(signal, 'SIGUSR1'):
+            supportedSignals.append(signal.SIGUSR1)
 
         self._oldSIGs = [(x,signal.getsignal(x)) for x in supportedSignals]
 
         for sig in supportedSignals:
             if hasattr(signal, 'SIGHUP') and sig == signal.SIGHUP:
                 signal.signal(sig, self._hupHandler)
-            elif sig == signal.SIGUSR1:
+            elif hasattr(signal, 'SIGUSR1') and sig == signal.SIGUSR1:
                 signal.signal(sig, self._usr1Handler)
             else:
                 signal.signal(sig, self._intHandler)

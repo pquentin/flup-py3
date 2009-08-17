@@ -102,6 +102,11 @@ class PreforkServer(object):
         self._children_to_purge = []
         self._last_purge = 0
 
+        if minSpare < 1:
+            raise ValueError("minSpare must be at least 1!")
+        if maxSpare < minSpare:
+            raise ValueError("maxSpare must be greater than, or equal to, minSpare!")
+
     def run(self, sock):
         """
         The main loop. Pass a socket that is ready to accept() client
@@ -122,7 +127,7 @@ class PreforkServer(object):
         # Main loop.
         while self._keepGoing:
             # Maintain minimum number of children.
-            while len(self._children) < self._maxSpare:
+            while len(self._children) < self._minSpare:
                 if not self._spawnChild(sock): break
 
             # Wait on any socket activity from live children.

@@ -126,8 +126,12 @@ class PreforkServer(object):
         
         # Main loop.
         while self._keepGoing:
-            # Maintain minimum number of children.
-            while len(self._children) < self._minSpare:
+            # Maintain minimum number of children. Note that we are checking
+            # the absolute number of children, not the number of "available"
+            # children. We explicitly test against _maxSpare to maintain
+            # an *optimistic* absolute minimum. The number of children will
+            # always be in the range [_maxSpare, _maxChildren].
+            while len(self._children) < self._maxSpare:
                 if not self._spawnChild(sock): break
 
             # Wait on any socket activity from live children.

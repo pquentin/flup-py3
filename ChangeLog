@@ -1,3 +1,8 @@
+2009-10-21  Allan Saddi  <allan@saddi.com>
+
+	* Add configurable timeout (default: no timeout) to be used when the
+	  WSGI application is called. Only applies to forked servers!
+
 2009-06-05  Allan Saddi  <allan@saddi.com>
 
 	* Fix bug in scgi servers that occurs when SCRIPT_NAME is missing.

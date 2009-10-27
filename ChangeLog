@@ -1,3 +1,8 @@
+2009-10-27  Allan Saddi  <allan@saddi.com>
+
+	* Exit gracefully if a thread cannot be started when adding a new
+	  job.
+
 2009-10-21  Allan Saddi  <allan@saddi.com>
 
 	* Add configurable timeout (default: no timeout) to be used when the

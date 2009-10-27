@@ -89,9 +89,12 @@ class ThreadPool(object):
             # Maintain minimum number of spares.
             while self._idleCount < self._minSpare and \
                   self._workerCount < self._maxThreads:
+                try:
+                    self._start_new_thread()
+                except thread.error:
+                    return False
                 self._workerCount += 1
                 self._idleCount += 1
-                self._start_new_thread()
 
             # Hand off the job.
             if self._idleCount or allowQueuing:

@@ -265,6 +265,7 @@ class PreforkServer(object):
             if self._children.has_key(pid):
                 del self._children[pid]
 
+        signal.alarm(0)
         signal.signal(signal.SIGALRM, oldSIGALRM)
 
         # Forcefully kill any remaining children.

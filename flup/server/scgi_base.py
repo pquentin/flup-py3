@@ -287,6 +287,7 @@ class Connection(object):
 
         # Restore old handler if timeout was given
         if self._timeout:
+            signal.alarm(0)
             signal.signal(signal.SIGALRM, old_alarm)
 
 

@@ -143,6 +143,7 @@ class ThreadPool(object):
 
             # Die off...
             assert self._workerCount > self._maxSpare
+            self._threads.remove(threading.currentThread())
             self._workerCount -= 1
         finally:
             self._lock.release()

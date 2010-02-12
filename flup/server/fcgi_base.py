@@ -886,7 +886,10 @@ class MultiplexedConnection(Connection):
             self._lock.release()
 
     def _start_request(self, req):
-        thread.start_new_thread(req.run, ())
+        try:
+            thread.start_new_thread(req.run, ())
+        except thread.error, e:
+            self.end_request(req, 0L, FCGI_OVERLOADED, remove=True)
 
     def _do_params(self, inrec):
         self._lock.acquire()

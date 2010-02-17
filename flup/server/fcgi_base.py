@@ -617,6 +617,7 @@ class CGIRequest(Request):
         self.stdout = StdoutWrapper(sys.stdout) # Oh, the humanity!
         self.stderr = sys.stderr
         self.data = StringIO.StringIO()
+        self._timeout = 0
         
     def _end(self, appStatus=0L, protocolStatus=FCGI_REQUEST_COMPLETE):
         sys.exit(appStatus)

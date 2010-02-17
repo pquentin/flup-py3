@@ -68,7 +68,7 @@ class ThreadPool(object):
         self._lock.release()
 
         # wait for all threads to finish
-        for t in self._threads:
+        for t in self._threads[:]:
             t.join()
 
     def addJob(self, job, allowQueuing=True):

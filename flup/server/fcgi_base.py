@@ -1000,27 +1000,40 @@ class BaseFCGIServer(object):
                 }
 
     def _setupSocket(self):
-        if self._bindAddress is None: # Run as a normal FastCGI?
-            isFCGI = True
-
-            sock = socket.fromfd(FCGI_LISTENSOCK_FILENO, socket.AF_INET,
-                                 socket.SOCK_STREAM)
-            try:
-                sock.getpeername()
-            except socket.error, e:
-                if e[0] == errno.ENOTSOCK:
-                    # Not a socket, assume CGI context.
-                    isFCGI = False
-                elif e[0] != errno.ENOTCONN:
-                    raise
+        if self._bindAddress is None:
+            # Run as a normal FastCGI?
 
             # FastCGI/CGI discrimination is broken on Mac OS X.
             # Set the environment variable FCGI_FORCE_CGI to "Y" or "y"
             # if you want to run your app as a simple CGI. (You can do
             # this with Apache's mod_env [not loaded by default in OS X
             # client, ha ha] and the SetEnv directive.)
-            if not isFCGI or self.forceCGI or \
-               os.environ.get('FCGI_FORCE_CGI', 'N').upper().startswith('Y'):
+            forceCGI = self.forceCGI or \
+               os.environ.get('FCGI_FORCE_CGI', 'N').upper().startswith('Y')
+
+            if forceCGI:
+                isFCGI = False
+            else:
+                if not hasattr(socket, 'fromfd'):
+                    # can happen on win32, no socket.fromfd there!
+                    raise ValueError(
+                        'If you want FCGI, please create an external FCGI server '
+                        'by providing a valid bindAddress. '
+                        'If you want CGI, please force CGI operation. Use '
+                        'FCGI_FORCE_CGI=Y environment or forceCGI parameter.')
+                sock = socket.fromfd(FCGI_LISTENSOCK_FILENO, socket.AF_INET,
+                                     socket.SOCK_STREAM)
+                isFCGI = True
+                try:
+                    sock.getpeername()
+                except socket.error, e:
+                    if e[0] == errno.ENOTSOCK:
+                        # Not a socket, assume CGI context.
+                        isFCGI = False
+                    elif e[0] != errno.ENOTCONN:
+                        raise
+
+            if not isFCGI:
                 req = self.cgirequest_class(self)
                 req.run()
                 sys.exit(0)

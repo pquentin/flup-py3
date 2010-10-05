@@ -1,3 +1,8 @@
+2010-10-05  Allan Saddi  <allan@saddi.com>
+
+	* Improvements to *_app._getConnection methods suggested by
+	  Andrej A Antonov. Thanks!
+
 2009-10-27  Allan Saddi  <allan@saddi.com>
 
 	* Exit gracefully if a thread cannot be started when adding a new

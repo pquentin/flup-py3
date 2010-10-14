@@ -1,3 +1,8 @@
+2010-10-14  Allan Saddi  <allan@saddi.com>
+
+	* Don't try to restore signal handlers if they weren't installed in
+	  the first place.
+
 2010-10-05  Allan Saddi  <allan@saddi.com>
 
 	* Improvements to *_app._getConnection methods suggested by

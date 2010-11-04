@@ -306,6 +306,8 @@ class OutputStream(object):
 
         if not data:
             return
+        if type(data) == str:
+            data = data.encode()
 
         self.dataWritten = True
 

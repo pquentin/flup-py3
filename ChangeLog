@@ -1,3 +1,8 @@
+2010-11-03  Allan Saddi  <allan@saddi.com>
+
+	* Some fixes to get forking fcgi working with Python 3.1. Thanks to
+	  Velko Ivanov for the patch!
+
 2009-05-29  Allan Saddi  <allan@saddi.com>
 
 	* Let all the active requests to finish before quitting. Thanks

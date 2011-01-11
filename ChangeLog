@@ -1,3 +1,8 @@
+2011-01-11  Allan Saddi  <allan@saddi.com>
+
+	* Use HTTP status code 500 for error pages. Thanks to
+	  Yohann Gabory for pointing out this issue and providing a patch.
+
 2010-10-14  Allan Saddi  <allan@saddi.com>
 
 	* Don't try to restore signal handlers if they weren't installed in

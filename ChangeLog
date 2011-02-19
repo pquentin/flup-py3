@@ -1,3 +1,7 @@
+2011-02-19  Allan Saddi  <allan@saddi.com>
+
+	* When deriving PATH_INFO from REQUEST_URI, take SCRIPT_NAME into account.
+
 2011-01-11  Allan Saddi  <allan@saddi.com>
 
 	* Use HTTP status code 500 for error pages. Thanks to

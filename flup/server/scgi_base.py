@@ -525,7 +525,10 @@ class BaseSCGIServer(object):
                 environ['SCRIPT_NAME'] = ''
             if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
                 if reqUri is not None:
-                    environ['PATH_INFO'] = reqUri[0]
+                    scriptName = environ['SCRIPT_NAME']
+                    if not reqUri[0].startswith(scriptName):
+                        self.logger.warning('SCRIPT_NAME does not match request URI')
+                    environ['PATH_INFO'] = reqUri[0][len(scriptName):]
                 else:
                     environ['PATH_INFO'] = ''
         else:

@@ -1186,7 +1186,10 @@ class BaseFCGIServer(object):
 
         if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
             if reqUri is not None:
-                environ['PATH_INFO'] = reqUri[0]
+                scriptName = environ['SCRIPT_NAME']
+                if not reqUri[0].startswith(scriptName):
+                    environ['wsgi.errors'].write('WARNING: SCRIPT_NAME does not match REQUEST_URI')
+                environ['PATH_INFO'] = reqUri[0][len(scriptName):]
             else:
                 environ['PATH_INFO'] = ''
         if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:

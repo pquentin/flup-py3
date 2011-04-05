@@ -1,3 +1,7 @@
+2011-04-04  Allan Saddi  <allan@saddi.com>
+
+	* Add threadpool options to Paste factories.
+
 2011-02-19  Allan Saddi  <allan@saddi.com>
 
 	* When deriving PATH_INFO from REQUEST_URI, take SCRIPT_NAME into account.

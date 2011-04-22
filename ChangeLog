@@ -1,3 +1,7 @@
+2011-04-22  Allan Saddi  <allan@saddi.com>
+
+	* Fix fcgi_single.
+
 2011-04-04  Allan Saddi  <allan@saddi.com>
 
 	* Add threadpool options to Paste factories.

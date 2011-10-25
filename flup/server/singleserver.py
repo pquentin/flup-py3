@@ -71,7 +71,7 @@ class SingleServer(object):
             try:
                 r, w, e = select.select([sock], [], [], timeout)
             except select.error as e:
-                if e[0] == errno.EINTR:
+                if e.args[0] == errno.EINTR:
                     continue
                 raise
 
@@ -79,7 +79,7 @@ class SingleServer(object):
                 try:
                     clientSock, addr = sock.accept()
                 except socket.error as e:
-                    if e[0] in (errno.EINTR, errno.EAGAIN):
+                    if e.args[0] in (errno.EINTR, errno.EAGAIN):
                         continue
                     raise
 

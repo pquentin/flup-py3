@@ -136,7 +136,7 @@ class PreforkServer(object):
             try:
                 r, w, e = select.select(r, [], [], timeout)
             except select.error as e:
-                if e.errno != errno.EINTR:
+                if e.args[0] != errno.EINTR:
                     raise
 
             # Scan child sockets and tend to those that need attention.
@@ -145,7 +145,7 @@ class PreforkServer(object):
                 try:
                     state = child.recv(1)
                 except socket.error as e:
-                    if e.errno in (errno.EAGAIN, errno.EINTR):
+                    if e.args[0] in (errno.EAGAIN, errno.EINTR):
                         # Guess it really didn't need attention?
                         continue
                     raise
@@ -214,7 +214,7 @@ class PreforkServer(object):
                 try:
                     os.kill(pid, signal.SIGINT)
                 except OSError as e:
-                    if e.errno != errno.ESRCH:
+                    if e.args[0] != errno.ESRCH:
                         raise
 
         def alrmHandler(signum, frame):
@@ -230,7 +230,7 @@ class PreforkServer(object):
             try:
                 pid, status = os.wait()
             except OSError as e:
-                if e.errno in (errno.ECHILD, errno.EINTR):
+                if e.args[0] in (errno.ECHILD, errno.EINTR):
                     break
             if pid in self._children:
                 del self._children[pid]
@@ -242,7 +242,7 @@ class PreforkServer(object):
             try:
                 os.kill(pid, signal.SIGKILL)
             except OSError as e:
-                if e.errno != errno.ESRCH:
+                if e.args[0] != errno.ESRCH:
                     raise
 
     def _reapChildren(self):
@@ -251,7 +251,7 @@ class PreforkServer(object):
             try:
                 pid, status = os.waitpid(-1, os.WNOHANG)
             except OSError as e:
-                if e.errno == errno.ECHILD:
+                if e.args[0] == errno.ECHILD:
                     break
                 raise
             if pid <= 0:
@@ -275,7 +275,7 @@ class PreforkServer(object):
         try:
             pid = os.fork()
         except OSError as e:
-            if e.errno in (errno.EAGAIN, errno.ENOMEM):
+            if e.args[0] in (errno.EAGAIN, errno.ENOMEM):
                 return False # Can't fork anymore.
             raise
         if not pid:
@@ -316,9 +316,9 @@ class PreforkServer(object):
                 parent.send(msg)
                 return True
             except socket.error as e:
-                if e.errno == errno.EPIPE:
+                if e.args[0] == errno.EPIPE:
                     return False # Parent is gone
-                if e.errno == errno.EAGAIN:
+                if e.args[0] == errno.EAGAIN:
                     # Wait for socket change before sending again
                     select.select([], [parent], [])
                 else:
@@ -355,7 +355,7 @@ class PreforkServer(object):
             try:
                 clientSock, addr = sock.accept()
             except socket.error as e:
-                if e.errno == errno.EAGAIN:
+                if e.args[0] == errno.EAGAIN:
                     # Or maybe not.
                     continue
                 raise

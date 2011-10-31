@@ -587,6 +587,7 @@ class Request(object):
 
         # Restore old handler if timeout was given
         if self._timeout:
+            signal.alarm(0)
             signal.signal(signal.SIGALRM, old_alarm)
 
         try:
@@ -618,6 +619,7 @@ class CGIRequest(Request):
         self.stdout = StdoutWrapper(sys.stdout) # Oh, the humanity!
         self.stderr = sys.stderr
         self.data = StringIO.StringIO()
+        self._timeout = 0
         
     def _end(self, appStatus=0, protocolStatus=FCGI_REQUEST_COMPLETE):
         sys.exit(appStatus)
@@ -821,7 +823,7 @@ class Connection(object):
         outrec = Record(FCGI_UNKNOWN_TYPE)
         outrec.contentData = struct.pack(FCGI_UnknownTypeBody, inrec.type)
         outrec.contentLength = FCGI_UnknownTypeBody_LEN
-        self.writeRecord(rec)
+        self.writeRecord(outrec)
         
 class MultiplexedConnection(Connection):
     """
@@ -887,7 +889,10 @@ class MultiplexedConnection(Connection):
             self._lock.release()
 
     def _start_request(self, req):
-        _thread.start_new_thread(req.run, ())
+        try:
+            _thread.start_new_thread(req.run, ())
+        except thread.error as e:
+            self.end_request(req, 0L, FCGI_OVERLOADED, remove=True)
 
     def _do_params(self, inrec):
         self._lock.acquire()
@@ -997,27 +1002,39 @@ class BaseFCGIServer(object):
                 }
 
     def _setupSocket(self):
-        if self._bindAddress is None: # Run as a normal FastCGI?
-            isFCGI = True
-
-            sock = socket.fromfd(FCGI_LISTENSOCK_FILENO, socket.AF_INET,
-                                 socket.SOCK_STREAM)
-            try:
-                sock.getpeername()
-            except socket.error as e:
-                if e.args[0] == errno.ENOTSOCK:
-                    # Not a socket, assume CGI context.
-                    isFCGI = False
-                elif e.args[0] != errno.ENOTCONN:
-                    raise
-
+        if self._bindAddress is None:
+            # Run as a normal FastCGI?
             # FastCGI/CGI discrimination is broken on Mac OS X.
             # Set the environment variable FCGI_FORCE_CGI to "Y" or "y"
             # if you want to run your app as a simple CGI. (You can do
             # this with Apache's mod_env [not loaded by default in OS X
             # client, ha ha] and the SetEnv directive.)
-            if not isFCGI or self.forceCGI or \
-               os.environ.get('FCGI_FORCE_CGI', 'N').upper().startswith('Y'):
+            forceCGI = self.forceCGI or \
+               os.environ.get('FCGI_FORCE_CGI', 'N').upper().startswith('Y')
+
+            if forceCGI:
+                isFCGI = False
+            else:
+                if not hasattr(socket, 'fromfd'):
+                    # can happen on win32, no socket.fromfd there!
+                    raise ValueError(
+                        'If you want FCGI, please create an external FCGI server '
+                        'by providing a valid bindAddress. '
+                        'If you want CGI, please force CGI operation. Use '
+                        'FCGI_FORCE_CGI=Y environment or forceCGI parameter.')
+                sock = socket.fromfd(FCGI_LISTENSOCK_FILENO, socket.AF_INET,
+                                     socket.SOCK_STREAM)
+                isFCGI = True
+                try:
+                    sock.getpeername()
+                except socket.error as e:
+                    if e.args[0] == errno.ENOTSOCK:
+                        # Not a socket, assume CGI context.
+                        isFCGI = False
+                    elif e.args[0] != errno.ENOTCONN:
+                        raise
+
+            if not isFCGI:
                 req = self.cgirequest_class(self)
                 req.run()
                 sys.exit(0)
@@ -1183,7 +1200,10 @@ class BaseFCGIServer(object):
 
         if 'PATH_INFO' not in environ or not environ['PATH_INFO']:
             if reqUri is not None:
-                environ['PATH_INFO'] = reqUri[0]
+                scriptName = environ['SCRIPT_NAME']
+                if not reqUri[0].startswith(scriptName):
+                    environ['wsgi.errors'].write('WARNING: SCRIPT_NAME does not match REQUEST_URI')
+                environ['PATH_INFO'] = reqUri[0][len(scriptName):]
             else:
                 environ['PATH_INFO'] = ''
         if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
@@ -1211,7 +1231,8 @@ class BaseFCGIServer(object):
         """
         if self.debug:
             import cgitb
-            req.stdout.write(b'Content-Type: text/html\r\n\r\n' +
+            req.stdout.write(b'Status: 500 Internal Server Error\r\n' +
+                             b'Content-Type: text/html\r\n\r\n' +
                              cgitb.html(sys.exc_info()).encode('latin-1'))
         else:
             errorpage = b"""<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
@@ -1222,5 +1243,6 @@ class BaseFCGIServer(object):
 <p>An unhandled exception was thrown by the application.</p>
 </body></html>
 """
-            req.stdout.write(b'Content-Type: text/html\r\n\r\n' +
+            req.stdout.write(b'Status: 500 Internal Server Error\r\n' +
+                             b'Content-Type: text/html\r\n\r\n' +
                              errorpage)

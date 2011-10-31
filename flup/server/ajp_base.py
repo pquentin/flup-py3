@@ -726,6 +726,7 @@ class Connection(object):
 
         # Restore old handler if timeout was given
         if self._timeout:
+            signal.alarm(0)
             signal.signal(signal.SIGALRM, old_alarm)
 
     def _shutdown(self, pkt):
@@ -973,7 +974,7 @@ class BaseAJPServer(object):
         all errors should be caught at the application level.
         """
         if self.debug:
-            request.startResponse(200, b'OK', [(b'Content-Type', b'text/html')])
+            request.startResponse(500, b'Internal Server Error', [(b'Content-Type', b'text/html')])
             import cgitb
             request.write(cgitb.html(sys.exc_info()).encode('latin-1'))
         else:
@@ -985,5 +986,5 @@ class BaseAJPServer(object):
 <p>An unhandled exception was thrown by the application.</p>
 </body></html>
 """
-            request.startResponse(200, b'OK', [(b'Content-Type', b'text/html')])
+            request.startResponse(200, b'Internal Server Error', [(b'Content-Type', b'text/html')])
             request.write(errorpage)

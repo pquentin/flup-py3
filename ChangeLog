@@ -1,7 +1,39 @@
+2011-04-22  Allan Saddi  <allan@saddi.com>
+
+	* Fix fcgi_single.
+
+2011-04-04  Allan Saddi  <allan@saddi.com>
+
+	* Add threadpool options to Paste factories.
+
+2011-02-19  Allan Saddi  <allan@saddi.com>
+
+	* When deriving PATH_INFO from REQUEST_URI, take SCRIPT_NAME into account.
+
+2011-01-11  Allan Saddi  <allan@saddi.com>
+
+	* Use HTTP status code 500 for error pages. Thanks to
+	  Yohann Gabory for pointing out this issue and providing a patch.
+
 2010-11-03  Allan Saddi  <allan@saddi.com>
 
-	* Some fixes to get forking fcgi working with Python 3.1. Thanks to
-	  Velko Ivanov for the patch!
+        * Some fixes to get forking fcgi working with Python 3.1. Thanks to
+          Velko Ivanov for the patch!
+
+2010-10-14  Allan Saddi  <allan@saddi.com>
+
+	* Don't try to restore signal handlers if they weren't installed in
+	  the first place.
+
+2010-10-05  Allan Saddi  <allan@saddi.com>
+
+	* Improvements to *_app._getConnection methods suggested by
+	  Andrej A Antonov. Thanks!
+
+2009-10-27  Allan Saddi  <allan@saddi.com>
+
+	* Exit gracefully if a thread cannot be started when adding a new
+	  job.
 
 2009-10-21  Allan Saddi  <allan@saddi.com>
 

@@ -287,6 +287,7 @@ class Connection(object):
 
         # Restore old handler if timeout was given
         if self._timeout:
+            signal.alarm(0)
             signal.signal(signal.SIGALRM, old_alarm)
 
 
@@ -537,7 +538,10 @@ class BaseSCGIServer(object):
                 environ['SCRIPT_NAME'] = ''
             if 'PATH_INFO' not in environ or not environ['PATH_INFO']:
                 if reqUri is not None:
-                    environ['PATH_INFO'] = reqUri[0]
+                    scriptName = environ['SCRIPT_NAME']
+                    if not reqUri[0].startswith(scriptName):
+                        self.logger.warning('SCRIPT_NAME does not match request URI')
+                    environ['PATH_INFO'] = reqUri[0][len(scriptName):]
                 else:
                     environ['PATH_INFO'] = ''
         else:
@@ -562,7 +566,8 @@ class BaseSCGIServer(object):
         """
         if self.debug:
             import cgitb
-            request.stdout.write(b'Content-Type: text/html\r\n\r\n' +
+            request.stdout.write(b'Status: 500 Internal Server Error\r\n' +
+                                 b'Content-Type: text/html\r\n\r\n' +
                                  cgitb.html(sys.exc_info()).encode('latin-1'))
         else:
             errorpage = b"""<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
@@ -573,5 +578,6 @@ class BaseSCGIServer(object):
 <p>An unhandled exception was thrown by the application.</p>
 </body></html>
 """
-            request.stdout.write(b'Content-Type: text/html\r\n\r\n' +
+            request.stdout.write(b'Status: 500 Internal Server Error\r\n' +
+                                 b'Content-Type: text/html\r\n\r\n' +
                                  errorpage)

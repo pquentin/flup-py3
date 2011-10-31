@@ -35,7 +35,7 @@ import errno
 __all__ = ['SCGIApp']
 
 def encodeNetstring(s):
-    return ''.join([str(len(s)), ':', s, ','])
+    return b''.join([str(len(s)).encode('latin-1'), b':', s, b','])
 
 class SCGIApp(object):
     def __init__(self, connect=None, host=None, port=None,
@@ -52,8 +52,8 @@ class SCGIApp(object):
     def __call__(self, environ, start_response):
         sock = self._getConnection()
 
-        outfile = sock.makefile('w')
-        infile = sock.makefile('r')
+        outfile = sock.makefile('wb')
+        infile = sock.makefile('rb')
 
         sock.close()
 
@@ -65,15 +65,15 @@ class SCGIApp(object):
         # TODO: Anything not from environ that needs to be sent also?
 
         content_length = int(environ.get('CONTENT_LENGTH') or 0)
-        if headers.has_key('CONTENT_LENGTH'):
+        if 'CONTENT_LENGTH' in headers:
             del headers['CONTENT_LENGTH']
             
-        headers_out = ['CONTENT_LENGTH', str(content_length), 'SCGI', '1']
-        for k,v in headers.items():
-            headers_out.append(k)
-            headers_out.append(v)
-        headers_out.append('') # For trailing NUL
-        outfile.write(encodeNetstring('\x00'.join(headers_out)))
+        headers_out = [b'CONTENT_LENGTH', str(content_length).encode('latin-1'), b'SCGI', b'1']
+        for k,v in list(headers.items()):
+            headers_out.append(k.encode('latin-1'))
+            headers_out.append(v.encode('latin-1'))
+        headers_out.append(b'') # For trailing NUL
+        outfile.write(encodeNetstring(b'\x00'.join(headers_out)))
 
         # Transfer wsgi.input to outfile
         while True:
@@ -96,14 +96,14 @@ class SCGIApp(object):
 
         infile.close()
         
-        result = ''.join(result)
+        result = b''.join(result)
 
         # Parse response headers
-        status = '200 OK'
+        status = b'200 OK'
         headers = []
         pos = 0
         while True:
-            eolpos = result.find('\n', pos)
+            eolpos = result.find(b'\n', pos)
             if eolpos < 0: break
             line = result[pos:eolpos-1]
             pos = eolpos + 1
@@ -116,16 +116,16 @@ class SCGIApp(object):
             if not line: break
 
             # TODO: Better error handling
-            header, value = line.split(':', 1)
+            header, value = line.split(b':', 1)
             header = header.strip().lower()
             value = value.strip()
 
-            if header == 'status':
+            if header == b'status':
                 # Special handling of Status header
                 status = value
-                if status.find(' ') < 0:
+                if status.find(b' ') < 0:
                     # Append a dummy reason phrase if one was not provided
-                    status += ' SCGIApp'
+                    status += b' SCGIApp'
             else:
                 headers.append((header, value))
 
@@ -150,7 +150,7 @@ class SCGIApp(object):
 
     def _defaultFilterEnviron(self, environ):
         result = {}
-        for n in environ.keys():
+        for n in list(environ.keys()):
             for p in self._environPrefixes:
                 if n.startswith(p):
                     result[n] = environ[n]
@@ -163,7 +163,7 @@ class SCGIApp(object):
 
     def _lightFilterEnviron(self, environ):
         result = {}
-        for n in environ.keys():
+        for n in list(environ.keys()):
             if n.upper() == n:
                 result[n] = environ[n]
         return result

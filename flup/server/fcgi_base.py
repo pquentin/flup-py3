@@ -535,6 +535,9 @@ class Record(object):
         if self.paddingLength:
             self._sendall(sock, b'\x00'*self.paddingLength)
             
+class TimeoutException(Exception):
+    pass
+
 class Request(object):
     """
     Represents a single FastCGI request.
@@ -544,8 +547,9 @@ class Request(object):
     be called by your handler. However, server, params, stdin, stdout,
     stderr, and data are free for your handler's use.
     """
-    def __init__(self, conn, inputStreamClass):
+    def __init__(self, conn, inputStreamClass, timeout):
         self._conn = conn
+        self._timeout = timeout
 
         self.server = conn.server
         self.params = {}
@@ -554,8 +558,20 @@ class Request(object):
         self.stderr = OutputStream(conn, self, FCGI_STDERR, buffered=True)
         self.data = inputStreamClass(conn)
 
+    def timeout_handler(self, signum, frame):
+        self.stderr.write('Timeout Exceeded\n')
+        self.stderr.write("\n".join(traceback.format_stack(frame)))
+        self.stderr.flush()
+
+        raise TimeoutException
+
     def run(self):
         """Runs the handler, flushes the streams, and ends the request."""
+        # If there is a timeout
+        if self._timeout:
+            old_alarm = signal.signal(signal.SIGALRM, self.timeout_handler)
+            signal.alarm(self._timeout)
+            
         try:
             protocolStatus, appStatus = self.server.handler(self)
         except:
@@ -568,6 +584,10 @@ class Request(object):
 
         if __debug__: _debug(1, 'protocolStatus = %d, appStatus = %d' %
                              (protocolStatus, appStatus))
+
+        # Restore old handler if timeout was given
+        if self._timeout:
+            signal.signal(signal.SIGALRM, old_alarm)
 
         try:
             self._flush()
@@ -617,10 +637,11 @@ class Connection(object):
     _multiplexed = False
     _inputStreamClass = InputStream
 
-    def __init__(self, sock, addr, server):
+    def __init__(self, sock, addr, server, timeout):
         self._sock = sock
         self._addr = addr
         self.server = server
+        self._timeout = timeout
 
         # Active Requests for this Connection, mapped by request ID.
         self._requests = {}
@@ -741,7 +762,8 @@ class Connection(object):
         """Handle an FCGI_BEGIN_REQUEST from the web server."""
         role, flags = struct.unpack(FCGI_BeginRequestBody, inrec.contentData)
 
-        req = self.server.request_class(self, self._inputStreamClass)
+        req = self.server.request_class(self, self._inputStreamClass,
+                                        self._timeout)
         req.requestId, req.role, req.flags = inrec.requestId, role, flags
         req.aborted = False
 
@@ -809,8 +831,9 @@ class MultiplexedConnection(Connection):
     _multiplexed = True
     _inputStreamClass = MultiplexedInputStream
 
-    def __init__(self, sock, addr, server):
-        super(MultiplexedConnection, self).__init__(sock, addr, server)
+    def __init__(self, sock, addr, server, timeout):
+        super(MultiplexedConnection, self).__init__(sock, addr, server,
+                                                    timeout)
 
         # Used to arbitrate access to self._requests.
         lock = threading.RLock()

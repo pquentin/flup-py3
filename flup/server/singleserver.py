@@ -70,16 +70,16 @@ class SingleServer(object):
         while self._keepGoing:
             try:
                 r, w, e = select.select([sock], [], [], timeout)
-            except select.error, e:
-                if e[0] == errno.EINTR:
+            except select.error as e:
+                if e.args[0] == errno.EINTR:
                     continue
                 raise
 
             if r:
                 try:
                     clientSock, addr = sock.accept()
-                except socket.error, e:
-                    if e[0] in (errno.EINTR, errno.EAGAIN):
+                except socket.error as e:
+                    if e.args[0] in (errno.EINTR, errno.EAGAIN):
                         continue
                     raise
 
@@ -153,12 +153,12 @@ if __name__ == '__main__':
             self._sock = sock
             self._addr = addr
         def run(self):
-            print "Client connection opened from %s:%d" % self._addr
+            print("Client connection opened from %s:%d" % self._addr)
             self._sock.send('Hello World!\n')
             self._sock.setblocking(1)
             self._sock.recv(1)
             self._sock.close()
-            print "Client connection closed from %s:%d" % self._addr
+            print("Client connection closed from %s:%d" % self._addr)
     sock = socket.socket()
     sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
     sock.bind(('', 8080))

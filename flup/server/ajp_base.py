@@ -38,7 +38,7 @@ import datetime
 import time
 
 # Unfortunately, for now, threads are required.
-import thread
+import _thread
 import threading
 
 from flup.server import NoDefault
@@ -46,100 +46,100 @@ from flup.server import NoDefault
 __all__ = ['BaseAJPServer']
 
 # Packet header prefixes.
-SERVER_PREFIX = '\x12\x34'
-CONTAINER_PREFIX = 'AB'
+SERVER_PREFIX = b'\x12\x34'
+CONTAINER_PREFIX = b'AB'
 
 # Server packet types.
-PKTTYPE_FWD_REQ = '\x02'
-PKTTYPE_SHUTDOWN = '\x07'
-PKTTYPE_PING = '\x08'
-PKTTYPE_CPING = '\x0a'
+PKTTYPE_FWD_REQ = 0x02
+PKTTYPE_SHUTDOWN = 0x07
+PKTTYPE_PING = 0x08
+PKTTYPE_CPING = 0x0a
 
 # Container packet types.
-PKTTYPE_SEND_BODY = '\x03'
-PKTTYPE_SEND_HEADERS = '\x04'
-PKTTYPE_END_RESPONSE = '\x05'
-PKTTYPE_GET_BODY = '\x06'
-PKTTYPE_CPONG = '\x09'
+PKTTYPE_SEND_BODY = b'\x03'
+PKTTYPE_SEND_HEADERS = b'\x04'
+PKTTYPE_END_RESPONSE = b'\x05'
+PKTTYPE_GET_BODY = b'\x06'
+PKTTYPE_CPONG = b'\x09'
 
 # Code tables for methods/headers/attributes.
 methodTable = [
     None,
-    'OPTIONS',
-    'GET',
-    'HEAD',
-    'POST',
-    'PUT',
-    'DELETE',
-    'TRACE',
-    'PROPFIND',
-    'PROPPATCH',
-    'MKCOL',
-    'COPY',
-    'MOVE',
-    'LOCK',
-    'UNLOCK',
-    'ACL',
-    'REPORT',
-    'VERSION-CONTROL',
-    'CHECKIN',
-    'CHECKOUT',
-    'UNCHECKOUT',
-    'SEARCH',
-    'MKWORKSPACE',
-    'UPDATE',
-    'LABEL',
-    'MERGE',
-    'BASELINE_CONTROL',
-    'MKACTIVITY'
+    b'OPTIONS',
+    b'GET',
+    b'HEAD',
+    b'POST',
+    b'PUT',
+    b'DELETE',
+    b'TRACE',
+    b'PROPFIND',
+    b'PROPPATCH',
+    b'MKCOL',
+    b'COPY',
+    b'MOVE',
+    b'LOCK',
+    b'UNLOCK',
+    b'ACL',
+    b'REPORT',
+    b'VERSION-CONTROL',
+    b'CHECKIN',
+    b'CHECKOUT',
+    b'UNCHECKOUT',
+    b'SEARCH',
+    b'MKWORKSPACE',
+    b'UPDATE',
+    b'LABEL',
+    b'MERGE',
+    b'BASELINE_CONTROL',
+    b'MKACTIVITY'
     ]
 
 requestHeaderTable = [
     None,
-    'Accept',
-    'Accept-Charset',
-    'Accept-Encoding',
-    'Accept-Language',
-    'Authorization',
-    'Connection',
-    'Content-Type',
-    'Content-Length',
-    'Cookie',
-    'Cookie2',
-    'Host',
-    'Pragma',
-    'Referer',
-    'User-Agent'
+    b'Accept',
+    b'Accept-Charset',
+    b'Accept-Encoding',
+    b'Accept-Language',
+    b'Authorization',
+    b'Connection',
+    b'Content-Type',
+    b'Content-Length',
+    b'Cookie',
+    b'Cookie2',
+    b'Host',
+    b'Pragma',
+    b'Referer',
+    b'User-Agent'
     ]
 
 attributeTable = [
     None,
-    'CONTEXT',
-    'SERVLET_PATH',
-    'REMOTE_USER',
-    'AUTH_TYPE',
-    'QUERY_STRING',
-    'JVM_ROUTE',
-    'SSL_CERT',
-    'SSL_CIPHER',
-    'SSL_SESSION',
+    b'CONTEXT',
+    b'SERVLET_PATH',
+    b'REMOTE_USER',
+    b'AUTH_TYPE',
+    b'QUERY_STRING',
+    b'JVM_ROUTE',
+    b'SSL_CERT',
+    b'SSL_CIPHER',
+    b'SSL_SESSION',
     None, # name follows
-    'SSL_KEY_SIZE'
+    b'SSL_KEY_SIZE'
     ]
 
 responseHeaderTable = [
     None,
-    'content-type',
-    'content-language',
-    'content-length',
-    'date',
-    'last-modified',
-    'location',
-    'set-cookie',
-    'set-cookie2',
-    'servlet-engine',
-    'status',
-    'www-authenticate'
+    b'content-type',
+    b'content-language',
+    b'content-length',
+    b'date',
+    b'last-modified',
+    b'location',
+    b'set-cookie',
+    b'set-cookie2',
+    b'servlet-engine',
+    b'status',
+    b'www-authenticate'
     ]
 
 # The main classes use this name for logging.
@@ -166,33 +166,33 @@ def decodeString(data, pos=0):
         length = struct.unpack('>H', data[pos:pos+2])[0]
         pos += 2
         if length == 0xffff: # This was undocumented!
-            return '', pos
+            return b'', pos
         s = data[pos:pos+length]
         return s, pos+length+1 # Don't forget NUL
-    except Exception, e:
-        raise ProtocolError, 'decodeString: '+str(e)
+    except Exception as e:
+        raise ProtocolError('decodeString: '+str(e))
 
 def decodeRequestHeader(data, pos=0):
     """Decode a request header/value pair."""
     try:
-        if data[pos] == '\xa0':
+        if data[pos] == 0xa0:
             # Use table
-            i = ord(data[pos+1])
+            i = data[pos+1]
             name = requestHeaderTable[i]
             if name is None:
-                raise ValueError, 'bad request header code'
+                raise ValueError('bad request header code')
             pos += 2
         else:
             name, pos = decodeString(data, pos)
         value, pos = decodeString(data, pos)
         return name, value, pos
-    except Exception, e:
-        raise ProtocolError, 'decodeRequestHeader: '+str(e)
+    except Exception as e:
+        raise ProtocolError('decodeRequestHeader: '+str(e))
 
 def decodeAttribute(data, pos=0):
     """Decode a request attribute."""
     try:
-        i = ord(data[pos])
+        i = data[pos]
         pos += 1
         if i == 0xff:
             # end
@@ -209,15 +209,15 @@ def decodeAttribute(data, pos=0):
         else:
             name = attributeTable[i]
             if name is None:
-                raise ValueError, 'bad attribute code'
+                raise ValueError('bad attribute code')
         value, pos = decodeString(data, pos)
         return name, value, pos
-    except Exception, e:
-        raise ProtocolError, 'decodeAttribute: '+str(e)
+    except Exception as e:
+        raise ProtocolError('decodeAttribute: '+str(e))
 
 def encodeString(s):
     """Encode a string."""
-    return struct.pack('>H', len(s)) + s + '\x00'
+    return struct.pack('>H', len(s)) + s + b'\x00'
 
 def encodeResponseHeader(name, value):
     """Encode a response header/value pair."""
@@ -225,7 +225,7 @@ def encodeResponseHeader(name, value):
     if lname in responseHeaderTable:
         # Use table
         i = responseHeaderTable.index(lname)
-        out = '\xa0' + chr(i)
+        out = b'\xa0' + bytes([i])
     else:
         out = encodeString(name)
     out += encodeString(value)
@@ -234,7 +234,7 @@ def encodeResponseHeader(name, value):
 class Packet(object):
     """An AJP message packet."""
     def __init__(self):
-        self.data = ''
+        self.data = b''
         # Don't set this on write, it will be calculated automatically.
         self.length = 0
 
@@ -248,8 +248,8 @@ class Packet(object):
         while length:
             try:
                 data = sock.recv(length)
-            except socket.error, e:
-                if e[0] == errno.EAGAIN:
+            except socket.error as e:
+                if e.args[0] == errno.EAGAIN:
                     select.select([sock], [], [])
                     continue
                 else:
@@ -260,7 +260,7 @@ class Packet(object):
             dataLen = len(data)
             recvLen += dataLen
             length -= dataLen
-        return ''.join(dataList), recvLen
+        return b''.join(dataList), recvLen
     _recvall = staticmethod(_recvall)
 
     def read(self, sock):
@@ -275,7 +275,7 @@ class Packet(object):
             raise EOFError
 
         if header[:2] != SERVER_PREFIX:
-            raise ProtocolError, 'invalid header'
+            raise ProtocolError('invalid header')
 
         self.length = struct.unpack('>H', header[2:4])[0]
         if self.length:
@@ -295,8 +295,8 @@ class Packet(object):
         while length:
             try:
                 sent = sock.send(data)
-            except socket.error, e:
-                if e[0] == errno.EAGAIN:
+            except socket.error as e:
+                if e.args[0] == errno.EAGAIN:
                     select.select([], [sock], [])
                     continue
                 else:
@@ -324,7 +324,7 @@ class InputStream(object):
         # See WSGIServer.
         self._shrinkThreshold = conn.server.inputStreamShrinkThreshold
 
-        self._buf = ''
+        self._buf = b''
         self._bufList = []
         self._pos = 0 # Current read position.
         self._avail = 0 # Number of bytes currently available.
@@ -356,7 +356,7 @@ class InputStream(object):
 
     def read(self, n=-1):
         if self._pos == self._length:
-            return ''
+            return b''
         while True:
             if n < 0 or (self._avail - self._pos) < n:
                 # Not enough data available.
@@ -373,7 +373,7 @@ class InputStream(object):
                 break
         # Merge buffer list, if necessary.
         if self._bufList:
-            self._buf += ''.join(self._bufList)
+            self._buf += b''.join(self._bufList)
             self._bufList = []
         r = self._buf[self._pos:newPos]
         self._pos = newPos
@@ -382,14 +382,14 @@ class InputStream(object):
 
     def readline(self, length=None):
         if self._pos == self._length:
-            return ''
+            return b''
         while True:
             # Unfortunately, we need to merge the buffer list early.
             if self._bufList:
-                self._buf += ''.join(self._bufList)
+                self._buf += b''.join(self._bufList)
                 self._bufList = []
             # Find newline.
-            i = self._buf.find('\n', self._pos)
+            i = self._buf.find(b'\n', self._pos)
             if i < 0:
                 # Not found?
                 if not self.bytesAvailForAdd():
@@ -426,7 +426,7 @@ class InputStream(object):
     def __iter__(self):
         return self
 
-    def next(self):
+    def __next__(self):
         r = self.readline()
         if not r:
             raise StopIteration
@@ -444,13 +444,14 @@ class InputStream(object):
         the server for data beyond the Content-Length, so the server should
         never send us an EOF (empty string argument).
         """
+        assert type(data) is bytes
         if not data:
-            raise ProtocolError, 'short data'
+            raise ProtocolError('short data')
         self._bufList.append(data)
         length = len(data)
         self._avail += length
         if self._avail > self._length:
-            raise ProtocolError, 'too much data'
+            raise ProtocolError('too much data')
 
 class Request(object):
     """
@@ -493,7 +494,7 @@ class Request(object):
 
         # Notify server of end of response (reuse flag is set to true).
         pkt = Packet()
-        pkt.data = PKTTYPE_END_RESPONSE + '\x01'
+        pkt.data = PKTTYPE_END_RESPONSE + b'\x01'
         self._conn.writePacket(pkt)
 
         handlerTime = end - start
@@ -507,22 +508,22 @@ class Request(object):
     # Request.
 
     def setMethod(self, value):
-        self.environ['REQUEST_METHOD'] = value
+        self.environ['REQUEST_METHOD'] = value.decode('latin-1')
 
     def setProtocol(self, value):
-        self.environ['SERVER_PROTOCOL'] = value
+        self.environ['SERVER_PROTOCOL'] = value.decode('latin-1')
 
     def setRequestURI(self, value):
-        self.environ['REQUEST_URI'] = value
+        self.environ['REQUEST_URI'] = value.decode('latin-1')
 
     def setRemoteAddr(self, value):
-        self.environ['REMOTE_ADDR'] = value
+        self.environ['REMOTE_ADDR'] = value.decode('latin-1')
 
     def setRemoteHost(self, value):
-        self.environ['REMOTE_HOST'] = value
+        self.environ['REMOTE_HOST'] = value.decode('latin-1')
 
     def setServerName(self, value):
-        self.environ['SERVER_NAME'] = value
+        self.environ['SERVER_NAME'] = value.decode('latin-1')
 
     def setServerPort(self, value):
         self.environ['SERVER_PORT'] = str(value)
@@ -532,17 +533,17 @@ class Request(object):
             self.environ['HTTPS'] = 'on'
 
     def addHeader(self, name, value):
-        name = name.replace('-', '_').upper()
-        if name in ('CONTENT_TYPE', 'CONTENT_LENGTH'):
-            self.environ[name] = value
-            if name == 'CONTENT_LENGTH':
+        name = name.replace(b'-', b'_').upper()
+        if name in (b'CONTENT_TYPE', b'CONTENT_LENGTH'):
+            self.environ[name.decode('latin-1')] = value.decode('latin-1')
+            if name == b'CONTENT_LENGTH':
                 length = int(value)
                 self.input.setDataLength(length)
         else:
-            self.environ['HTTP_'+name] = value
+            self.environ[(b'HTTP_'+name).decode('latin-1')] = value.decode('latin-1')
 
     def addAttribute(self, name, value):
-        self.environ[name] = value
+        self.environ[name.decode('latin-1')] = value.decode('latin-1')
 
     # The only two methods that should be called from the handler.
 
@@ -563,7 +564,7 @@ class Request(object):
                    struct.pack('>H', statusCode) + \
                    encodeString(statusMsg) + \
                    struct.pack('>H', len(headers)) + \
-                   ''.join([encodeResponseHeader(name, value)
+                   b''.join([encodeResponseHeader(name, value)
                             for name,value in headers])
 
         self._conn.writePacket(pkt)
@@ -585,7 +586,7 @@ class Request(object):
             pkt = Packet()
             pkt.data = PKTTYPE_SEND_BODY + \
                        struct.pack('>H', toWrite) + \
-                       data[:toWrite] + '\x00' # Undocumented
+                       data[:toWrite] + b'\x00' # Undocumented
             self._conn.writePacket(pkt)
 
             data = data[toWrite:]
@@ -615,7 +616,7 @@ class Connection(object):
         while True:
             try:
                 self.processInput()
-            except ProtocolError, e:
+            except ProtocolError as e:
                 self.logger.error("Protocol error '%s'", str(e))
                 break
             except (EOFError, KeyboardInterrupt):
@@ -641,7 +642,7 @@ class Connection(object):
             return
 
         if not pkt.length:
-            raise ProtocolError, 'unexpected empty packet'
+            raise ProtocolError('unexpected empty packet')
 
         pkttype = pkt.data[0]
         if pkttype == PKTTYPE_FWD_REQ:
@@ -653,7 +654,7 @@ class Connection(object):
         elif pkttype == PKTTYPE_CPING:
             self._cping(pkt)
         else:
-            raise ProtocolError, 'unknown packet type'
+            raise ProtocolError('unknown packet type')
 
     def _forwardRequest(self, pkt):
         """
@@ -662,10 +663,10 @@ class Connection(object):
         assert self._request is None
 
         req = self.server.requestClass(self)
-        i = ord(pkt.data[1])
+        i = pkt.data[1]
         method = methodTable[i]
         if method is None:
-            raise ValueError, 'bad method field'
+            raise ValueError('bad method field')
         req.setMethod(method)
         value, pos = decodeString(pkt.data, 2)
         req.setProtocol(value)
@@ -679,7 +680,7 @@ class Connection(object):
         req.setServerName(value)
         value = struct.unpack('>H', pkt.data[pos:pos+2])[0]
         req.setServerPort(value)
-        i = ord(pkt.data[pos+2])
+        i = pkt.data[pos+2]
         req.setIsSSL(i != 0)
 
         # Request headers.
@@ -732,7 +733,7 @@ class Connection(object):
             self._request.input.addData(pkt.data[2:2+length])
         else:
             # Shouldn't really ever get here.
-            self._request.input.addData('')
+            self._request.input.addData(b'')
 
     def writePacket(self, pkt):
         """Sends a Packet to the server."""
@@ -793,7 +794,7 @@ class BaseAJPServer(object):
         self._allowedServers = allowedServers
 
         # Used to force single-threadedness.
-        self._appLock = thread.allocate_lock()
+        self._appLock = _thread.allocate_lock()
 
         self.logger = logging.getLogger(LoggerName)
         self.logger.setLevel(loggingLevel)
@@ -844,7 +845,10 @@ class BaseAJPServer(object):
         result = None
 
         def write(data):
-            assert type(data) is str, 'write() argument must be string'
+            if type(data) is str:
+                data = data.encode('latin-1')
+
+            assert type(data) is bytes, 'write() argument must be bytes'
             assert headers_set, 'write() before start_response()'
 
             if not headers_sent:
@@ -853,14 +857,14 @@ class BaseAJPServer(object):
                 statusMsg = status[4:]
                 found = False
                 for header,value in responseHeaders:
-                    if header.lower() == 'content-length':
+                    if header.lower() == b'content-length':
                         found = True
                         break
                 if not found and result is not None:
                     try:
                         if len(result) == 1:
-                            responseHeaders.append(('Content-Length',
-                                                    str(len(data))))
+                            responseHeaders.append((b'Content-Length',
+                                                    str(len(data)).encode('latin-1')))
                     except:
                         pass
                 request.startResponse(statusCode, statusMsg, responseHeaders)
@@ -872,23 +876,33 @@ class BaseAJPServer(object):
                 try:
                     if headers_sent:
                         # Re-raise if too late
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
                 finally:
                     exc_info = None # avoid dangling circular ref
             else:
                 assert not headers_set, 'Headers already set!'
 
-            assert type(status) is str, 'Status must be a string'
-            assert len(status) >= 4, 'Status must be at least 4 characters'
-            assert int(status[:3]), 'Status must begin with 3-digit code'
-            assert status[3] == ' ', 'Status must have a space after code'
-            assert type(response_headers) is list, 'Headers must be a list'
-            if __debug__:
-                for name,val in response_headers:
-                    assert type(name) is str, 'Header name "%s" must be a string' % name
-                    assert type(val) is str, 'Value of header "%s" must be a string' % name
+            if type(status) is str:
+                status = status.encode('latin-1')
 
-            headers_set[:] = [status, response_headers]
+            assert type(status) is bytes, 'Status must be bytes'
+            assert len(status) >= 4, 'Status must be at least 4 bytes'
+            assert int(status[:3]), 'Status must begin with 3-digit code'
+            assert status[3] == 0x20, 'Status must have a space after code'
+            assert type(response_headers) is list, 'Headers must be a list'
+            new_response_headers = []
+            for name,val in response_headers:
+                if type(name) is str:
+                    name = name.encode('latin-1')
+                if type(val) is str:
+                    val = val.encode('latin-1')
+
+                assert type(name) is bytes, 'Header name "%s" must be bytes' % name
+                assert type(val) is bytes, 'Value of header "%s" must be bytes' % name
+
+                new_response_headers.append((name, val))
+
+            headers_set[:] = [status, new_response_headers]
             return write
 
         if not self.multithreaded:
@@ -901,12 +915,12 @@ class BaseAJPServer(object):
                         if data:
                             write(data)
                     if not headers_sent:
-                        write('') # in case body was empty
+                        write(b'') # in case body was empty
                 finally:
                     if hasattr(result, 'close'):
                         result.close()
-            except socket.error, e:
-                if e[0] != errno.EPIPE:
+            except socket.error as e:
+                if e.args[0] != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
             if not self.multithreaded:
@@ -924,10 +938,10 @@ class BaseAJPServer(object):
         environ['SCRIPT_NAME'] = scriptName
 
         reqUri = None
-        if environ.has_key('REQUEST_URI'):
+        if 'REQUEST_URI' in environ:
             reqUri = environ['REQUEST_URI'].split('?', 1)
 
-        if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
+        if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
             if reqUri is not None and len(reqUri) > 1:
                 environ['QUERY_STRING'] = reqUri[1]
             else:
@@ -939,11 +953,11 @@ class BaseAJPServer(object):
         all errors should be caught at the application level.
         """
         if self.debug:
-            request.startResponse(200, 'OK', [('Content-Type', 'text/html')])
+            request.startResponse(200, b'OK', [(b'Content-Type', b'text/html')])
             import cgitb
-            request.write(cgitb.html(sys.exc_info()))
+            request.write(cgitb.html(sys.exc_info()).encode('latin-1'))
         else:
-            errorpage = """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+            errorpage = b"""<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>Unhandled Exception</title>
 </head><body>
@@ -951,5 +965,5 @@ class BaseAJPServer(object):
 <p>An unhandled exception was thrown by the application.</p>
 </body></html>
 """
-            request.startResponse(200, 'OK', [('Content-Type', 'text/html')])
+            request.startResponse(200, b'OK', [(b'Content-Type', b'text/html')])
             request.write(errorpage)

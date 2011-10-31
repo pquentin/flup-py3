@@ -37,7 +37,7 @@ class ThreadPool(object):
     the number of threads that can be started, but this can be controlled
     by maxThreads.
     """
-    def __init__(self, minSpare=1, maxSpare=5, maxThreads=sys.maxint):
+    def __init__(self, minSpare=1, maxSpare=5, maxThreads=sys.maxsize):
         self._minSpare = minSpare
         self._maxSpare = maxSpare
         self._maxThreads = max(minSpare, maxThreads)

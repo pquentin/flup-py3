@@ -82,8 +82,8 @@ __version__ = '$Revision$'
 import socket
 import logging
 
-from flup.server.ajp_base import BaseAJPServer, Connection
-from flup.server.threadedserver import ThreadedServer
+from .ajp_base import BaseAJPServer, Connection
+from .threadedserver import ThreadedServer
 
 __all__ = ['WSGIServer']
 
@@ -134,7 +134,7 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
                                loggingLevel=loggingLevel,
                                debug=debug)
         for key in ('jobClass', 'jobArgs'):
-            if kw.has_key(key):
+            if key in kw:
                 del kw[key]
         ThreadedServer.__init__(self, jobClass=Connection, jobArgs=(self,),
                                 **kw)
@@ -149,7 +149,7 @@ class WSGIServer(BaseAJPServer, ThreadedServer):
 
         try:
             sock = self._setupSocket()
-        except socket.error, e:
+        except socket.error as e:
             self.logger.error('Failed to bind socket (%s), exiting', e[1])
             return False
 
@@ -175,11 +175,11 @@ if __name__ == '__main__':
               '<body>\n' \
               '<p>Hello World!</p>\n' \
               '<table border="1">'
-        names = environ.keys()
+        names = list(environ.keys())
         names.sort()
         for name in names:
             yield '<tr><td>%s</td><td>%s</td></tr>\n' % (
-                name, cgi.escape(`environ[name]`))
+                name, cgi.escape(repr(environ[name])))
 
         form = cgi.FieldStorage(fp=environ['wsgi.input'], environ=environ,
                                 keep_blank_values=1)

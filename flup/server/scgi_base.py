@@ -32,7 +32,7 @@ import logging
 import socket
 import select
 import errno
-import cStringIO as StringIO
+import io as StringIO
 import signal
 import datetime
 import os
@@ -40,7 +40,7 @@ import warnings
 
 # Threads are required. If you want a non-threaded (forking) version, look at
 # SWAP <http://www.idyll.org/~t/www-tools/wsgi/>.
-import thread
+import _thread
 import threading
 
 __all__ = ['BaseSCGIServer']
@@ -75,8 +75,8 @@ def recvall(sock, length):
     while length:
         try:
             data = sock.recv(length)
-        except socket.error, e:
-            if e[0] == errno.EAGAIN:
+        except socket.error as e:
+            if e.args[0] == errno.EAGAIN:
                 select.select([sock], [], [])
                 continue
             else:
@@ -87,24 +87,24 @@ def recvall(sock, length):
         dataLen = len(data)
         recvLen += dataLen
         length -= dataLen
-    return ''.join(dataList), recvLen
+    return b''.join(dataList), recvLen
 
 def readNetstring(sock):
     """
     Attempt to read a netstring from a socket.
     """
     # First attempt to read the length.
-    size = ''
+    size = b''
     while True:
         try:
             c = sock.recv(1)
-        except socket.error, e:
-            if e[0] == errno.EAGAIN:
+        except socket.error as e:
+            if e.args[0] == errno.EAGAIN:
                 select.select([sock], [], [])
                 continue
             else:
                 raise
-        if c == ':':
+        if c == b':':
             break
         if not c:
             raise EOFError
@@ -116,7 +116,7 @@ def readNetstring(sock):
         if size < 0:
             raise ValueError
     except ValueError:
-        raise ProtocolError, 'invalid netstring length'
+        raise ProtocolError('invalid netstring length')
 
     # Now read the string.
     s, length = recvall(sock, size)
@@ -130,8 +130,8 @@ def readNetstring(sock):
     if length < 1:
         raise EOFError
 
-    if trailer != ',':
-        raise ProtocolError, 'invalid netstring trailer'
+    if trailer != b',':
+        raise ProtocolError('invalid netstring trailer')
 
     return s
 
@@ -218,7 +218,7 @@ class Connection(object):
             self.processInput()
         except (EOFError, KeyboardInterrupt):
             pass
-        except ProtocolError, e:
+        except ProtocolError as e:
             self.logger.error("Protocol error '%s'", str(e))
         except:
             self.logger.exception('Exception caught in Connection')
@@ -233,32 +233,32 @@ class Connection(object):
     def processInput(self):
         # Read headers
         headers = readNetstring(self._sock)
-        headers = headers.split('\x00')[:-1]
+        headers = headers.split(b'\x00')[:-1]
         if len(headers) % 2 != 0:
-            raise ProtocolError, 'invalid headers'
+            raise ProtocolError('invalid headers')
         environ = {}
-        for i in range(len(headers) / 2):
-            environ[headers[2*i]] = headers[2*i+1]
+        for i in range(len(headers) // 2):
+            environ[headers[2*i].decode('latin-1')] = headers[2*i+1].decode('latin-1')
 
         clen = environ.get('CONTENT_LENGTH')
         if clen is None:
-            raise ProtocolError, 'missing CONTENT_LENGTH'
+            raise ProtocolError('missing CONTENT_LENGTH')
         try:
             clen = int(clen)
             if clen < 0:
                 raise ValueError
         except ValueError:
-            raise ProtocolError, 'invalid CONTENT_LENGTH'
+            raise ProtocolError('invalid CONTENT_LENGTH')
 
         self._sock.setblocking(1)
         if clen:
-            input = self._sock.makefile('r')
+            input = self._sock.makefile('rb')
         else:
             # Empty input.
             input = StringIO.StringIO()
 
         # stdout
-        output = self._sock.makefile('w')
+        output = self._sock.makefile('wb')
 
         # Allocate Request
         req = Request(self, environ, input, output)
@@ -326,7 +326,7 @@ class BaseSCGIServer(object):
         self._allowedServers = allowedServers
 
         # Used to force single-threadedness.
-        self._appLock = thread.allocate_lock()
+        self._appLock = _thread.allocate_lock()
 
         self.logger = logging.getLogger(LoggerName)
         self.logger.setLevel(loggingLevel)
@@ -398,27 +398,30 @@ class BaseSCGIServer(object):
         result = None
 
         def write(data):
-            assert type(data) is str, 'write() argument must be string'
+            if type(data) is str:
+                data = data.encode('latin-1')
+
+            assert type(data) is bytes, 'write() argument must be bytes'
             assert headers_set, 'write() before start_response()'
 
             if not headers_sent:
                 status, responseHeaders = headers_sent[:] = headers_set
                 found = False
                 for header,value in responseHeaders:
-                    if header.lower() == 'content-length':
+                    if header.lower() == b'content-length':
                         found = True
                         break
                 if not found and result is not None:
                     try:
                         if len(result) == 1:
-                            responseHeaders.append(('Content-Length',
-                                                    str(len(data))))
+                            responseHeaders.append((b'Content-Length',
+                                                    str(len(data)).encode('latin-1')))
                     except:
                         pass
-                s = 'Status: %s\r\n' % status
-                for header in responseHeaders:
-                    s += '%s: %s\r\n' % header
-                s += '\r\n'
+                s = b'Status: ' + status + b'\r\n'
+                for header,value in responseHeaders:
+                    s += header + b': ' + value + b'\r\n'
+                s += b'\r\n'
                 request.stdout.write(s)
 
             request.stdout.write(data)
@@ -429,23 +432,33 @@ class BaseSCGIServer(object):
                 try:
                     if headers_sent:
                         # Re-raise if too late
-                        raise exc_info[0], exc_info[1], exc_info[2]
+                        raise exc_info[0](exc_info[1]).with_traceback(exc_info[2])
                 finally:
                     exc_info = None # avoid dangling circular ref
             else:
                 assert not headers_set, 'Headers already set!'
 
-            assert type(status) is str, 'Status must be a string'
+            if type(status) is str:
+                status = status.encode('latin-1')
+
+            assert type(status) is bytes, 'Status must be a bytes'
             assert len(status) >= 4, 'Status must be at least 4 characters'
             assert int(status[:3]), 'Status must begin with 3-digit code'
-            assert status[3] == ' ', 'Status must have a space after code'
+            assert status[3] == 0x20, 'Status must have a space after code'
             assert type(response_headers) is list, 'Headers must be a list'
-            if __debug__:
-                for name,val in response_headers:
-                    assert type(name) is str, 'Header name "%s" must be a string' % name
-                    assert type(val) is str, 'Value of header "%s" must be a string' % name
+            new_response_headers = []
+            for name,val in response_headers:
+                if type(name) is str:
+                    name = name.encode('latin-1')
+                if type(val) is str:
+                    val = val.encode('latin-1')
 
-            headers_set[:] = [status, response_headers]
+                assert type(name) is bytes, 'Header name "%s" must be bytes' % name
+                assert type(val) is bytes, 'Value of header "%s" must be bytes' % name
+
+                new_response_headers.append((name, val))
+
+            headers_set[:] = [status, new_response_headers]
             return write
 
         if not self.multithreaded:
@@ -458,12 +471,12 @@ class BaseSCGIServer(object):
                         if data:
                             write(data)
                     if not headers_sent:
-                        write('') # in case body was empty
+                        write(b'') # in case body was empty
                 finally:
                     if hasattr(result, 'close'):
                         result.close()
-            except socket.error, e:
-                if e[0] != errno.EPIPE:
+            except socket.error as e:
+                if e.args[0] != errno.EPIPE:
                     raise # Don't let EPIPE propagate beyond server
         finally:
             if not self.multithreaded:
@@ -472,11 +485,11 @@ class BaseSCGIServer(object):
     def _sanitizeEnv(self, environ):
         """Fill-in/deduce missing values in environ."""
         reqUri = None
-        if environ.has_key('REQUEST_URI'):
+        if 'REQUEST_URI' in environ:
             reqUri = environ['REQUEST_URI'].split('?', 1)
 
         # Ensure QUERY_STRING exists
-        if not environ.has_key('QUERY_STRING') or not environ['QUERY_STRING']:
+        if 'QUERY_STRING' not in environ or not environ['QUERY_STRING']:
             if reqUri is not None and len(reqUri) > 1:
                 environ['QUERY_STRING'] = reqUri[1]
             else:
@@ -499,9 +512,9 @@ class BaseSCGIServer(object):
 
         if scriptName is NoDefault:
             # Pull SCRIPT_NAME/PATH_INFO from environment, with empty defaults
-            if not environ.has_key('SCRIPT_NAME'):
+            if 'SCRIPT_NAME' not in environ:
                 environ['SCRIPT_NAME'] = ''
-            if not environ.has_key('PATH_INFO') or not environ['PATH_INFO']:
+            if 'PATH_INFO' not in environ or not environ['PATH_INFO']:
                 if reqUri is not None:
                     environ['PATH_INFO'] = reqUri[0]
                 else:
@@ -528,10 +541,10 @@ class BaseSCGIServer(object):
         """
         if self.debug:
             import cgitb
-            request.stdout.write('Content-Type: text/html\r\n\r\n' +
-                                 cgitb.html(sys.exc_info()))
+            request.stdout.write(b'Content-Type: text/html\r\n\r\n' +
+                                 cgitb.html(sys.exc_info()).encode('latin-1'))
         else:
-            errorpage = """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+            errorpage = b"""<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
 <html><head>
 <title>Unhandled Exception</title>
 </head><body>
@@ -539,5 +552,5 @@ class BaseSCGIServer(object):
 <p>An unhandled exception was thrown by the application.</p>
 </body></html>
 """
-            request.stdout.write('Content-Type: text/html\r\n\r\n' +
+            request.stdout.write(b'Content-Type: text/html\r\n\r\n' +
                                  errorpage)

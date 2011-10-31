@@ -1,6 +1,6 @@
 syntax: glob
 *~
-*.pyc
+__pycache__
 build
 dist
 flup.egg-info

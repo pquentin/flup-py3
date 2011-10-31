@@ -892,7 +892,7 @@ class MultiplexedConnection(Connection):
         try:
             _thread.start_new_thread(req.run, ())
         except thread.error as e:
-            self.end_request(req, 0L, FCGI_OVERLOADED, remove=True)
+            self.end_request(req, 0, FCGI_OVERLOADED, remove=True)
 
     def _do_params(self, inrec):
         self._lock.acquire()

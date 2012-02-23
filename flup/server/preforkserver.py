@@ -83,13 +83,21 @@ class PreforkServer(object):
     jobClass should have a run() method (taking no arguments) that does
     the actual work. When run() returns, the request is considered
     complete and the child process moves to idle state.
+    
+    -- added by Velko Ivanov
+    sockTimeout is a timeout in seconds for the server's sockets. This
+    should be 0 (pure non-blocking mode, default) or more (timeout mode).
+    Fractional values (float) accepted. Setting this could help limit the
+    damage in situations of bad connectivity.
+    
     """
     def __init__(self, minSpare=1, maxSpare=5, maxChildren=50,
-                 maxRequests=0, jobClass=None, jobArgs=()):
+                 maxRequests=0, sockTimeout=0, jobClass=None, jobArgs=()):
         self._minSpare = minSpare
         self._maxSpare = maxSpare
         self._maxChildren = max(maxSpare, maxChildren)
         self._maxRequests = maxRequests
+        self._sockTimeout = sockTimeout
         self._jobClass = jobClass
         self._jobArgs = jobArgs
 
@@ -106,6 +114,9 @@ class PreforkServer(object):
             raise ValueError("minSpare must be at least 1!")
         if maxSpare < minSpare:
             raise ValueError("maxSpare must be greater than, or equal to, minSpare!")
+        t = type(sockTimeout)
+        if (t != int and t != float) or (sockTimeout < 0):
+            raise ValueError("sockTimeout must be an int or float, greater than or equal to 0")
 
     def run(self, sock):
         """
@@ -119,7 +130,7 @@ class PreforkServer(object):
         self._installSignalHandlers()
 
         # Don't want operations on main socket to block.
-        sock.setblocking(0)
+        sock.setblocking(self._sockTimeout)
 
         # Set close-on-exec
         setCloseOnExec(sock)

@@ -28,7 +28,10 @@ __author__ = 'Allan Saddi <allan@saddi.com>'
 __version__ = '$Revision$'
 
 import sys
-import thread
+try:
+    import thread
+except ImportError:
+    import _thread as thread
 import threading
 
 class ThreadPool(object):

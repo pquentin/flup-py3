@@ -1053,8 +1053,10 @@ class BaseFCGIServer(object):
             else:
                 # INET socket
                 assert type(self._bindAddress) is tuple
-                assert len(self._bindAddress) == 2
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                family = socket.AF_INET
+                if len(self._bindAddress) > 2:
+                    family = socket.AF_INET6
+                sock = socket.socket(family, socket.SOCK_STREAM)
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
             sock.bind(self._bindAddress)

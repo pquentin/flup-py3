@@ -16,10 +16,10 @@ The actual command is different among operation systems. For example,
 Add this line to your `requirements.txt`:
 
 ```text
-git+https://github.com/pquentin/flup-py3.git
+flup-py3
 ```
 
-Then run this command (assume the command is **pip3**):
+Then run this command (assuming **pip3**):
 
 ```text
 pip3 install -r requirements.txt
